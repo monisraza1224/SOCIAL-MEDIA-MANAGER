@@ -73,8 +73,29 @@ const authMiddleware = async (req, res, next) => {
   }
 };
 
+// Initialize default data
+const initializeDefaultData = async () => {
+  try {
+    let adminUser = await User.findOne({ where: { email: 'admin@test.com' } });
+    
+    if (!adminUser) {
+      console.log('Creating admin user...');
+      // Store plain text password temporarily
+      adminUser = await User.create({
+        username: 'admin',
+        email: 'admin@test.com',
+        password: 'password123', // Plain text
+        role: 'admin'
+      });
+      console.log('Admin user created with plain text password');
+    }
+  } catch (error) {
+    console.error('Error creating default data:', error);
+  }
+};
+
 // ====================
-// WORKING AUTH ROUTES
+// WORKING AUTH ROUTES - PLAIN TEXT PASSWORDS
 // ====================
 app.post('/api/auth/login', async (req, res) => {
   try {
@@ -91,11 +112,13 @@ app.post('/api/auth/login', async (req, res) => {
       return res.status(400).json({ message: 'Invalid credentials' });
     }
 
-    console.log('✅ User found, checking password...');
-    
-    // DIRECT PASSWORD COMPARISON - NO BCRYPT
-    if (password === 'password123') {
-      console.log('🎉 Login successful (direct match)');
+    console.log('✅ User found:', user.email);
+    console.log('🔑 Stored password:', user.password);
+    console.log('🔑 Input password:', password);
+
+    // SIMPLE PLAIN TEXT COMPARISON - THIS WILL WORK
+    if (password === user.password) {
+      console.log('🎉 Login successful!');
       
       const token = jwt.sign(
         { userId: user.id, role: user.role },
@@ -114,7 +137,7 @@ app.post('/api/auth/login', async (req, res) => {
         }
       });
     } else {
-      console.log('❌ Password incorrect');
+      console.log('❌ Password mismatch');
       return res.status(400).json({ message: 'Invalid credentials' });
     }
   } catch (error) {
@@ -123,7 +146,7 @@ app.post('/api/auth/login', async (req, res) => {
   }
 });
 
-// SIMPLE CREATE ADMIN ROUTE
+// CREATE ADMIN ROUTE - PLAIN TEXT
 app.post('/api/create-admin', async (req, res) => {
   try {
     console.log('🔄 Creating admin user...');
@@ -131,15 +154,15 @@ app.post('/api/create-admin', async (req, res) => {
     // Delete existing admin
     await User.destroy({ where: { email: 'admin@test.com' } });
     
-    // Create new admin WITHOUT password hashing
+    // Create new admin with plain text password
     const user = await User.create({
       username: 'admin',
       email: 'admin@test.com',
-      password: 'password123', // Store plain text temporarily
+      password: 'password123', // Plain text
       role: 'admin'
     });
     
-    console.log('✅ Admin user created');
+    console.log('✅ Admin user created with password: password123');
     
     res.json({ 
       message: 'Admin user created successfully',
@@ -147,7 +170,7 @@ app.post('/api/create-admin', async (req, res) => {
         email: 'admin@test.com',
         password: 'password123'
       },
-      note: 'Password stored as plain text for testing'
+      note: 'Using plain text passwords for immediate login functionality'
     });
   } catch (error) {
     console.error('Create admin error:', error);
@@ -155,84 +178,223 @@ app.post('/api/create-admin', async (req, res) => {
   }
 });
 
-// TEST LOGIN ROUTE
-app.post('/api/test-login', async (req, res) => {
+// CHECK USER DATA
+app.get('/api/debug-users', async (req, res) => {
   try {
-    const { email, password } = req.body;
-    console.log('🧪 Test login:', { email, password });
+    const users = await User.findAll({
+      attributes: ['id', 'username', 'email', 'password', 'role']
+    });
     
-    const user = await User.findOne({ where: { email } });
-    if (!user) {
-      return res.json({ success: false, message: 'User not found' });
-    }
-    
-    console.log('Stored password:', user.password);
-    console.log('Input password:', password);
-    
-    const success = (password === user.password);
-    
-    res.json({ 
-      success,
-      message: success ? 'Login successful' : 'Login failed',
-      storedPassword: user.password,
-      inputPassword: password
+    res.json({
+      message: 'All users in database',
+      users: users,
+      total: users.length
     });
   } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
+    res.status(500).json({ message: 'Error fetching users', error: error.message });
   }
 });
 
 // ====================
-// OTHER ROUTES (Keep your existing ones)
+// OTHER ROUTES
 // ====================
 app.get('/', (req, res) => {
   res.json({ 
     message: 'Social Media Manager API is running!',
     status: 'success',
-    endpoints: {
-      login: 'POST /api/auth/login',
-      createAdmin: 'POST /api/create-admin',
-      testLogin: 'POST /api/test-login'
-    }
+    version: '1.0.0',
+    environment: process.env.NODE_ENV || 'development',
+    database: process.env.DATABASE_URL ? 'PostgreSQL' : 'SQLite',
+    login: 'POST /api/auth/login',
+    createAdmin: 'POST /api/create-admin'
+  });
+});
+
+app.get('/api', (req, res) => {
+  res.json({ 
+    message: 'Social Media Manager API',
+    version: '1.0.0',
+    status: 'running',
+    endpoints: [
+      'GET    /api/health',
+      'POST   /api/auth/login',
+      'POST   /api/create-admin',
+      'GET    /api/debug-users',
+      'GET    /api/social-accounts',
+      'POST   /api/social-accounts',
+      'GET    /api/posts',
+      'POST   /api/posts',
+      'POST   /api/upload'
+    ]
   });
 });
 
 app.get('/api/health', async (req, res) => {
   try {
     const usersCount = await User.count();
+    const postsCount = await Post.count();
+    const accountsCount = await SocialAccount.count();
+    const conversationsCount = await Conversation.count();
+    
     res.json({
       status: 'OK',
+      database: process.env.DATABASE_URL ? 'PostgreSQL' : 'SQLite',
+      environment: process.env.NODE_ENV || 'development',
       users: usersCount,
+      socialAccounts: accountsCount,
+      posts: postsCount,
+      conversations: conversationsCount,
       timestamp: new Date().toISOString()
     });
   } catch (error) {
-    res.status(500).json({ status: 'ERROR', error: error.message });
+    res.status(500).json({ 
+      status: 'ERROR', 
+      error: error.message 
+    });
   }
 });
 
-// ... KEEP ALL YOUR EXISTING ROUTES (posts, social-accounts, upload, etc.) ...
+// ====================
+// SOCIAL ACCOUNTS ROUTES
+// ====================
+app.get('/api/social-accounts', authMiddleware, async (req, res) => {
+  try {
+    const accounts = await SocialAccount.findAll({ 
+      where: { userId: req.user.id } 
+    });
+    
+    res.json({
+      message: 'Social accounts retrieved successfully',
+      accounts
+    });
+  } catch (error) {
+    console.error('Get accounts error:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
+app.post('/api/social-accounts', authMiddleware, async (req, res) => {
+  try {
+    const account = await SocialAccount.create({
+      userId: req.user.id,
+      ...req.body
+    });
+    
+    res.status(201).json({
+      message: 'Social account added successfully',
+      account
+    });
+  } catch (error) {
+    console.error('Create account error:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
+// ====================
+// POSTS ROUTES
+// ====================
+app.get('/api/posts', authMiddleware, async (req, res) => {
+  try {
+    const posts = await Post.findAll({ 
+      where: { userId: req.user.id },
+      order: [['scheduledFor', 'ASC']],
+      include: [{ model: SocialAccount, attributes: ['platform', 'accountName'] }]
+    });
+    
+    res.json({
+      message: 'Posts retrieved successfully',
+      posts
+    });
+  } catch (error) {
+    console.error('Get posts error:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
+app.post('/api/posts', authMiddleware, async (req, res) => {
+  try {
+    const { 
+      title, 
+      content, 
+      hashtags, 
+      cta, 
+      mediaType, 
+      mediaUrls, 
+      scheduledFor, 
+      platforms,
+      selectedAccounts 
+    } = req.body;
+
+    if (!title || !content || !mediaType || !scheduledFor) {
+      return res.status(400).json({ 
+        message: 'Missing required fields: title, content, mediaType, scheduledFor' 
+      });
+    }
+
+    const post = await Post.create({
+      userId: req.user.id,
+      title,
+      content,
+      hashtags: hashtags || [],
+      cta: cta || '',
+      mediaType,
+      mediaUrls: mediaUrls || [],
+      scheduledFor: new Date(scheduledFor),
+      status: 'scheduled',
+      selectedAccounts: selectedAccounts || []
+    });
+
+    res.status(201).json({
+      message: 'Post created successfully',
+      post
+    });
+  } catch (error) {
+    console.error('Post creation error:', error);
+    res.status(500).json({ 
+      message: 'Server error', 
+      error: error.message 
+    });
+  }
+});
+
+// ====================
+// FILE UPLOAD ROUTES
+// ====================
+app.post('/api/upload', authMiddleware, upload.single('media'), (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ message: 'No file uploaded' });
+    }
+
+    const fileUrl = `/uploads/${req.file.filename}`;
+    
+    res.json({
+      message: 'File uploaded successfully',
+      fileName: req.file.originalname,
+      fileUrl: fileUrl,
+      fileSize: req.file.size,
+      mimetype: req.file.mimetype
+    });
+  } catch (error) {
+    console.error('Upload error:', error);
+    res.status(500).json({ message: 'File upload failed', error: error.message });
+  }
+});
+
+app.use('/uploads', express.static(uploadsDir));
 
 // START SERVER
 const startServer = async () => {
   try {
     await testConnection();
-    
-    // Create admin if doesn't exist
-    const adminExists = await User.findOne({ where: { email: 'admin@test.com' } });
-    if (!adminExists) {
-      await User.create({
-        username: 'admin',
-        email: 'admin@test.com',
-        password: 'password123',
-        role: 'admin'
-      });
-      console.log('✅ Default admin created');
-    }
+    await initializeDefaultData();
     
     app.listen(PORT, '0.0.0.0', () => {
       console.log(`✅ Server running on port ${PORT}`);
+      console.log(`✅ Environment: ${process.env.NODE_ENV || 'development'}`);
+      console.log(`✅ Database: ${process.env.DATABASE_URL ? 'PostgreSQL' : 'SQLite'}`);
       console.log(`✅ API: https://social-media-manager-2.onrender.com/api`);
-      console.log(`🔑 Login: admin@test.com / password123`);
+      console.log(`🔑 Login: admin@test.com / password123 (plain text)`);
     });
   } catch (error) {
     console.error('❌ Failed to start server:', error);
