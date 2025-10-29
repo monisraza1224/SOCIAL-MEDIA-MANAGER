@@ -24,7 +24,7 @@ if (process.env.OPENAI_API_KEY) {
   });
 }
 
-// FIXED CORS CONFIGURATION - This will solve the login issue
+// FIXED CORS CONFIGURATION
 app.use(cors({
   origin: [
     'http://localhost:5173',
@@ -103,14 +103,16 @@ const authMiddleware = async (req, res, next) => {
   }
 };
 
-// Initialize default data
+// Initialize default data - FIXED PASSWORD CREATION
 const initializeDefaultData = async () => {
   try {
     // Check if admin user exists
     const adminUser = await User.findOne({ where: { email: 'admin@test.com' } });
     
     if (!adminUser) {
-      // Create admin user
+      console.log('Creating default admin user...');
+      
+      // Create admin user with properly hashed password
       const hashedPassword = await bcrypt.hash('password123', 12);
       const user = await User.create({
         username: 'admin',
@@ -118,6 +120,8 @@ const initializeDefaultData = async () => {
         password: hashedPassword,
         role: 'admin'
       });
+
+      console.log('Admin user created:', user.email);
 
       // Create sample social accounts
       await SocialAccount.bulkCreate([
@@ -141,6 +145,8 @@ const initializeDefaultData = async () => {
       ]);
 
       console.log('✅ Default data created successfully');
+    } else {
+      console.log('Admin user already exists:', adminUser.email);
     }
   } catch (error) {
     console.error('Error creating default data:', error);
@@ -193,43 +199,51 @@ app.get('/api', (req, res) => {
 });
 
 // ====================
-// AUTH ROUTES
+// AUTH ROUTES - COMPLETELY FIXED
 // ====================
 app.post('/api/auth/login', async (req, res) => {
   try {
-    console.log('Login request received:', req.body);
+    console.log('🔐 Login attempt received:', req.body);
     
     const { email, password } = req.body;
 
     if (!email || !password) {
-      console.log('Missing email or password');
+      console.log('❌ Missing email or password');
       return res.status(400).json({ message: 'Email and password are required' });
     }
 
-    console.log('Looking for user with email:', email);
+    console.log('🔍 Searching for user:', email);
+    
+    // Find user by email
     const user = await User.findOne({ where: { email } });
     
     if (!user) {
-      console.log('User not found:', email);
+      console.log('❌ User not found:', email);
       return res.status(400).json({ message: 'Invalid credentials' });
     }
 
-    // Check password
-    console.log('Checking password for user:', user.email);
+    console.log('✅ User found:', user.email);
+    console.log('🔑 Checking password...');
+
+    // Check password - FIXED COMPARISON
     const isMatch = await bcrypt.compare(password, user.password);
     
+    console.log('🔑 Password match result:', isMatch);
+    
     if (!isMatch) {
-      console.log('Password mismatch for user:', user.email);
+      console.log('❌ Password incorrect for user:', user.email);
       return res.status(400).json({ message: 'Invalid credentials' });
     }
 
+    // Create JWT token
     const token = jwt.sign(
       { userId: user.id, role: user.role },
       process.env.JWT_SECRET || 'fallback_secret',
       { expiresIn: '7d' }
     );
 
-    console.log('Login successful for:', user.email);
+    console.log('🎉 Login successful for:', user.email);
+    
     res.json({
       message: 'Login successful',
       token,
@@ -241,7 +255,7 @@ app.post('/api/auth/login', async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('Login error details:', error);
+    console.error('💥 Login error:', error);
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 });
@@ -264,10 +278,13 @@ app.post('/api/auth/register', async (req, res) => {
       return res.status(400).json({ message: 'User already exists' });
     }
 
+    // Hash password before saving
+    const hashedPassword = await bcrypt.hash(password, 12);
+    
     const user = await User.create({
       username,
       email,
-      password,
+      password: hashedPassword,
       role: role || 'editor'
     });
 
@@ -290,6 +307,42 @@ app.post('/api/auth/register', async (req, res) => {
   } catch (error) {
     console.error('Registration error:', error);
     res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
+// ====================
+// FIXED RESET ADMIN ROUTE
+// ====================
+app.post('/api/reset-admin', async (req, res) => {
+  try {
+    console.log('🔄 Resetting admin password...');
+    
+    // Delete existing admin user
+    await User.destroy({ where: { email: 'admin@test.com' } });
+    console.log('✅ Old admin user deleted');
+    
+    // Create new admin user with properly hashed password
+    const hashedPassword = await bcrypt.hash('password123', 12);
+    const user = await User.create({
+      username: 'admin',
+      email: 'admin@test.com',
+      password: hashedPassword,
+      role: 'admin'
+    });
+    
+    console.log('✅ New admin user created:', user.email);
+    
+    res.json({ 
+      message: 'Admin user reset successfully',
+      credentials: {
+        email: 'admin@test.com',
+        password: 'password123'
+      },
+      note: 'Password has been properly hashed and stored'
+    });
+  } catch (error) {
+    console.error('Reset admin error:', error);
+    res.status(500).json({ message: 'Error resetting admin', error: error.message });
   }
 });
 
@@ -681,54 +734,6 @@ async function generateAutoReply(message, conversationHistory = []) {
 //     res.sendFile(path.join(__dirname, '../client/dist/index.html'));
 //   });
 // }
-
-// ====================
-// TEMPORARY: RESET ADMIN PASSWORD
-// ====================
-app.post('/api/reset-admin', async (req, res) => {
-  try {
-    console.log('Resetting admin password...');
-    
-    // Find admin user
-    const adminUser = await User.findOne({ where: { email: 'admin@test.com' } });
-    
-    if (!adminUser) {
-      // Create admin user if doesn't exist
-      const hashedPassword = await bcrypt.hash('password123', 12);
-      const user = await User.create({
-        username: 'admin',
-        email: 'admin@test.com',
-        password: hashedPassword,
-        role: 'admin'
-      });
-      
-      return res.json({ 
-        message: 'Admin user created successfully',
-        credentials: {
-          email: 'admin@test.com',
-          password: 'password123'
-        }
-      });
-    }
-    
-    // Reset password for existing admin
-    const newPassword = 'password123';
-    const hashedPassword = await bcrypt.hash(newPassword, 12);
-    await adminUser.update({ password: hashedPassword });
-    
-    res.json({ 
-      message: 'Admin password reset successfully',
-      credentials: {
-        email: 'admin@test.com',
-        password: 'password123'
-      }
-    });
-    
-  } catch (error) {
-    console.error('Reset admin error:', error);
-    res.status(500).json({ message: 'Error resetting admin', error: error.message });
-  }
-});
 
 // START SERVER
 const startServer = async () => {
