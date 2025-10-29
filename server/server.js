@@ -24,12 +24,11 @@ if (process.env.OPENAI_API_KEY) {
   });
 }
 
-// CORS configuration
+// CORS configuration - ALLOW ALL ORIGINS (for testing)
 app.use(cors({
-  origin: process.env.CLIENT_URL || 'http://localhost:5173',
+  origin: true,
   credentials: true
 }));
-app.use(express.json());
 
 // File upload setup
 const uploadsDir = path.join(__dirname, 'uploads');
