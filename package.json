@@ -1,0 +1,11 @@
+{
+  "name": "social-media-manager",
+  "version": "1.0.0",
+  "description": "Centralized social media management tool",
+  "scripts": {
+    "dev:server": "cd server && npm run dev"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}
