@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react'
 import axios from 'axios'
 import './App.css'
 
-const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:5000/api'
+// FIXED: Use the correct production backend URL
+const API_BASE = 'https://social-media-manager-2.onrender.com/api'
 
 function App() {
   const [user, setUser] = useState(null)
@@ -39,6 +40,7 @@ function App() {
 
   const handleLogin = async (email, password) => {
     try {
+      console.log('🔄 Attempting login to:', API_BASE)
       const response = await axios.post(`${API_BASE}/auth/login`, {
         email,
         password
@@ -47,7 +49,9 @@ function App() {
       setToken(response.data.token)
       setUser(response.data.user)
       localStorage.setItem('token', response.data.token)
+      console.log('✅ Login successful')
     } catch (error) {
+      console.error('❌ Login failed:', error)
       alert('Login failed: ' + (error.response?.data?.message || error.message))
     }
   }
@@ -103,6 +107,48 @@ function App() {
     </div>
   )
 }
+
+// Login Component
+function LoginPage({ onLogin }) {
+  const [email, setEmail] = useState('admin@test.com')
+  const [password, setPassword] = useState('password123')
+
+  const handleSubmit = (e) => {
+    e.preventDefault()
+    onLogin(email, password)
+  }
+
+  return (
+    <div className="login-page">
+      <div className="login-container">
+        <h1>Social Media Manager</h1>
+        <form onSubmit={handleSubmit} className="login-form">
+          <input
+            type="email"
+            placeholder="Email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+          />
+          <input
+            type="password"
+            placeholder="Password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+          />
+          <button type="submit">Login</button>
+        </form>
+        <p className="demo-credentials">
+          Demo: admin@test.com / password123
+        </p>
+      </div>
+    </div>
+  )
+}
+
+// ... REST OF YOUR COMPONENTS REMAIN EXACTLY THE SAME ...
+// (Header, Navigation, ProfessionalDashboard, EnhancedPostsManager, etc.)
 
 // Login Component
 function LoginPage({ onLogin }) {
