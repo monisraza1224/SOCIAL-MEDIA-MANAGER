@@ -682,6 +682,54 @@ async function generateAutoReply(message, conversationHistory = []) {
 //   });
 // }
 
+// ====================
+// TEMPORARY: RESET ADMIN PASSWORD
+// ====================
+app.post('/api/reset-admin', async (req, res) => {
+  try {
+    console.log('Resetting admin password...');
+    
+    // Find admin user
+    const adminUser = await User.findOne({ where: { email: 'admin@test.com' } });
+    
+    if (!adminUser) {
+      // Create admin user if doesn't exist
+      const hashedPassword = await bcrypt.hash('password123', 12);
+      const user = await User.create({
+        username: 'admin',
+        email: 'admin@test.com',
+        password: hashedPassword,
+        role: 'admin'
+      });
+      
+      return res.json({ 
+        message: 'Admin user created successfully',
+        credentials: {
+          email: 'admin@test.com',
+          password: 'password123'
+        }
+      });
+    }
+    
+    // Reset password for existing admin
+    const newPassword = 'password123';
+    const hashedPassword = await bcrypt.hash(newPassword, 12);
+    await adminUser.update({ password: hashedPassword });
+    
+    res.json({ 
+      message: 'Admin password reset successfully',
+      credentials: {
+        email: 'admin@test.com',
+        password: 'password123'
+      }
+    });
+    
+  } catch (error) {
+    console.error('Reset admin error:', error);
+    res.status(500).json({ message: 'Error resetting admin', error: error.message });
+  }
+});
+
 // START SERVER
 const startServer = async () => {
   try {
