@@ -24,11 +24,22 @@ if (process.env.OPENAI_API_KEY) {
   });
 }
 
-// CORS configuration - ALLOW ALL ORIGINS (for testing)
+// FIXED CORS CONFIGURATION - This will solve the login issue
 app.use(cors({
-  origin: true,
-  credentials: true
+  origin: [
+    'http://localhost:5173',
+    'https://social-media-manager-frontend-fkqp.onrender.com',
+    'https://social-media-manager-2.onrender.com'
+  ],
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
 }));
+
+// Handle preflight requests
+app.options('*', cors());
+
+app.use(express.json());
 
 // File upload setup
 const uploadsDir = path.join(__dirname, 'uploads');
@@ -186,20 +197,29 @@ app.get('/api', (req, res) => {
 // ====================
 app.post('/api/auth/login', async (req, res) => {
   try {
+    console.log('Login request received:', req.body);
+    
     const { email, password } = req.body;
 
     if (!email || !password) {
+      console.log('Missing email or password');
       return res.status(400).json({ message: 'Email and password are required' });
     }
 
+    console.log('Looking for user with email:', email);
     const user = await User.findOne({ where: { email } });
+    
     if (!user) {
+      console.log('User not found:', email);
       return res.status(400).json({ message: 'Invalid credentials' });
     }
 
     // Check password
+    console.log('Checking password for user:', user.email);
     const isMatch = await bcrypt.compare(password, user.password);
+    
     if (!isMatch) {
+      console.log('Password mismatch for user:', user.email);
       return res.status(400).json({ message: 'Invalid credentials' });
     }
 
@@ -209,6 +229,7 @@ app.post('/api/auth/login', async (req, res) => {
       { expiresIn: '7d' }
     );
 
+    console.log('Login successful for:', user.email);
     res.json({
       message: 'Login successful',
       token,
@@ -220,7 +241,7 @@ app.post('/api/auth/login', async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('Login error:', error);
+    console.error('Login error details:', error);
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 });
@@ -678,6 +699,7 @@ const startServer = async () => {
       console.log(`✅ File Upload System Ready`);
       console.log(`✅ API Available at: http://localhost:${PORT}/api`);
       console.log(`✅ Root endpoint: http://localhost:${PORT}/`);
+      console.log(`✅ CORS configured for frontend: https://social-media-manager-frontend-fkqp.onrender.com`);
     });
   } catch (error) {
     console.error('❌ Failed to start server:', error);
