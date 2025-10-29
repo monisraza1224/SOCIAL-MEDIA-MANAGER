@@ -1,6 +1,6 @@
 const { DataTypes } = require('sequelize');
 const { sequelize } = require('../database');
-const bcrypt = require('bcryptjs');
+// const bcrypt = require('bcryptjs'); // COMMENT OUT THIS LINE
 
 // User Model
 const User = sequelize.define('User', {
@@ -31,16 +31,17 @@ const User = sequelize.define('User', {
     defaultValue: 'editor'
   }
 }, {
-  hooks: {
-    beforeCreate: async (user) => {
-      user.password = await bcrypt.hash(user.password, 12);
-    },
-    beforeUpdate: async (user) => {
-      if (user.changed('password')) {
-        user.password = await bcrypt.hash(user.password, 12);
-      }
-    }
-  }
+  // COMMENT OUT THESE HOOKS TEMPORARILY:
+  // hooks: {
+  //   beforeCreate: async (user) => {
+  //     user.password = await bcrypt.hash(user.password, 12);
+  //   },
+  //   beforeUpdate: async (user) => {
+  //     if (user.changed('password')) {
+  //       user.password = await bcrypt.hash(user.password, 12);
+  //     }
+  //   }
+  // }
 });
 
 // Social Account Model
