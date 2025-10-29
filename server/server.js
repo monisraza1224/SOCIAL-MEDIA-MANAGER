@@ -138,6 +138,51 @@ const initializeDefaultData = async () => {
 };
 
 // ====================
+// ROOT & API INFO ROUTES
+// ====================
+app.get('/', (req, res) => {
+  res.json({ 
+    message: 'Social Media Manager API is running!',
+    status: 'success',
+    version: '1.0.0',
+    environment: process.env.NODE_ENV || 'development',
+    database: process.env.DATABASE_URL ? 'PostgreSQL' : 'SQLite',
+    endpoints: {
+      health: '/api/health',
+      test: '/api/test',
+      auth: '/api/auth/login',
+      posts: '/api/posts',
+      accounts: '/api/social-accounts',
+      upload: '/api/upload'
+    },
+    documentation: 'All API endpoints are under /api/ path'
+  });
+});
+
+app.get('/api', (req, res) => {
+  res.json({ 
+    message: 'Social Media Manager API',
+    version: '1.0.0',
+    status: 'running',
+    environment: process.env.NODE_ENV || 'development',
+    endpoints: [
+      'GET    /api/health',
+      'GET    /api/test',
+      'POST   /api/auth/login',
+      'POST   /api/auth/register',
+      'GET    /api/social-accounts',
+      'POST   /api/social-accounts',
+      'GET    /api/posts',
+      'POST   /api/posts',
+      'PUT    /api/posts/:id',
+      'DELETE /api/posts/:id',
+      'POST   /api/upload',
+      'GET    /api/conversations'
+    ]
+  });
+});
+
+// ====================
 // AUTH ROUTES
 // ====================
 app.post('/api/auth/login', async (req, res) => {
@@ -607,14 +652,15 @@ async function generateAutoReply(message, conversationHistory = []) {
   }
 }
 
-// Serve static files in production
-if (process.env.NODE_ENV === 'production') {
-  app.use(express.static(path.join(__dirname, '../client/dist')));
-  
-  app.get('*', (req, res) => {
-    res.sendFile(path.join(__dirname, '../client/dist/index.html'));
-  });
-}
+// Comment out static file serving since we have separate frontend
+// Serve static files in production - COMMENTED OUT FOR SEPARATE FRONTEND
+// if (process.env.NODE_ENV === 'production') {
+//   app.use(express.static(path.join(__dirname, '../client/dist')));
+//   
+//   app.get('*', (req, res) => {
+//     res.sendFile(path.join(__dirname, '../client/dist/index.html'));
+//   });
+// }
 
 // START SERVER
 const startServer = async () => {
@@ -632,6 +678,7 @@ const startServer = async () => {
       console.log(`✅ Database: ${process.env.DATABASE_URL ? 'PostgreSQL' : 'SQLite'}`);
       console.log(`✅ File Upload System Ready`);
       console.log(`✅ API Available at: http://localhost:${PORT}/api`);
+      console.log(`✅ Root endpoint: http://localhost:${PORT}/`);
     });
   } catch (error) {
     console.error('❌ Failed to start server:', error);
