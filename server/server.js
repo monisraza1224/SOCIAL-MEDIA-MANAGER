@@ -6,6 +6,7 @@ const { OpenAI } = require('openai');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
+const { Op } = require('sequelize');
 require('dotenv').config();
 
 // Import database and models
@@ -15,13 +16,19 @@ const { User, SocialAccount, Post, Conversation } = require('./models');
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Initialize OpenAI
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY
-});
+// Initialize OpenAI (optional - only if API key is provided)
+let openai;
+if (process.env.OPENAI_API_KEY) {
+  openai = new OpenAI({
+    apiKey: process.env.OPENAI_API_KEY
+  });
+}
 
-// Middleware
-app.use(cors());
+// CORS configuration
+app.use(cors({
+  origin: process.env.CLIENT_URL || 'http://localhost:5173',
+  credentials: true
+}));
 app.use(express.json());
 
 // File upload setup
@@ -55,12 +62,12 @@ const upload = multer({
   storage: storage,
   fileFilter: fileFilter,
   limits: {
-    fileSize: 100 * 1024 * 1024
+    fileSize: 100 * 1024 * 1024 // 100MB
   }
 });
 
-// Mock auth middleware (will be replaced with real auth)
-const mockAuthMiddleware = async (req, res, next) => {
+// Auth middleware
+const authMiddleware = async (req, res, next) => {
   try {
     const token = req.header('Authorization')?.replace('Bearer ', '');
     
@@ -71,7 +78,10 @@ const mockAuthMiddleware = async (req, res, next) => {
     const decoded = jwt.verify(token, process.env.JWT_SECRET || 'fallback_secret');
     
     // Find user in database
-    const user = await User.findByPk(decoded.userId);
+    const user = await User.findByPk(decoded.userId, {
+      attributes: { exclude: ['password'] }
+    });
+    
     if (!user) {
       return res.status(401).json({ message: 'Token is not valid' });
     }
@@ -134,6 +144,10 @@ app.post('/api/auth/login', async (req, res) => {
   try {
     const { email, password } = req.body;
 
+    if (!email || !password) {
+      return res.status(400).json({ message: 'Email and password are required' });
+    }
+
     const user = await User.findOne({ where: { email } });
     if (!user) {
       return res.status(400).json({ message: 'Invalid credentials' });
@@ -162,6 +176,7 @@ app.post('/api/auth/login', async (req, res) => {
       }
     });
   } catch (error) {
+    console.error('Login error:', error);
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 });
@@ -169,6 +184,10 @@ app.post('/api/auth/login', async (req, res) => {
 app.post('/api/auth/register', async (req, res) => {
   try {
     const { username, email, password, role } = req.body;
+
+    if (!username || !email || !password) {
+      return res.status(400).json({ message: 'Username, email and password are required' });
+    }
 
     const existingUser = await User.findOne({ 
       where: { 
@@ -180,12 +199,10 @@ app.post('/api/auth/register', async (req, res) => {
       return res.status(400).json({ message: 'User already exists' });
     }
 
-    const hashedPassword = await bcrypt.hash(password, 12);
-
     const user = await User.create({
       username,
       email,
-      password: hashedPassword,
+      password,
       role: role || 'editor'
     });
 
@@ -206,6 +223,7 @@ app.post('/api/auth/register', async (req, res) => {
       }
     });
   } catch (error) {
+    console.error('Registration error:', error);
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 });
@@ -213,7 +231,7 @@ app.post('/api/auth/register', async (req, res) => {
 // ====================
 // SOCIAL ACCOUNTS ROUTES
 // ====================
-app.get('/api/social-accounts', mockAuthMiddleware, async (req, res) => {
+app.get('/api/social-accounts', authMiddleware, async (req, res) => {
   try {
     const accounts = await SocialAccount.findAll({ 
       where: { userId: req.user.id } 
@@ -224,11 +242,12 @@ app.get('/api/social-accounts', mockAuthMiddleware, async (req, res) => {
       accounts
     });
   } catch (error) {
+    console.error('Get accounts error:', error);
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 });
 
-app.post('/api/social-accounts', mockAuthMiddleware, async (req, res) => {
+app.post('/api/social-accounts', authMiddleware, async (req, res) => {
   try {
     const account = await SocialAccount.create({
       userId: req.user.id,
@@ -240,6 +259,7 @@ app.post('/api/social-accounts', mockAuthMiddleware, async (req, res) => {
       account
     });
   } catch (error) {
+    console.error('Create account error:', error);
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 });
@@ -247,7 +267,7 @@ app.post('/api/social-accounts', mockAuthMiddleware, async (req, res) => {
 // ====================
 // POSTS ROUTES
 // ====================
-app.get('/api/posts', mockAuthMiddleware, async (req, res) => {
+app.get('/api/posts', authMiddleware, async (req, res) => {
   try {
     const posts = await Post.findAll({ 
       where: { userId: req.user.id },
@@ -260,11 +280,12 @@ app.get('/api/posts', mockAuthMiddleware, async (req, res) => {
       posts
     });
   } catch (error) {
+    console.error('Get posts error:', error);
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 });
 
-app.post('/api/posts', mockAuthMiddleware, async (req, res) => {
+app.post('/api/posts', authMiddleware, async (req, res) => {
   try {
     const { 
       title, 
@@ -281,7 +302,7 @@ app.post('/api/posts', mockAuthMiddleware, async (req, res) => {
     // Validate required fields
     if (!title || !content || !mediaType || !scheduledFor) {
       return res.status(400).json({ 
-        message: 'Missing required fields' 
+        message: 'Missing required fields: title, content, mediaType, scheduledFor' 
       });
     }
 
@@ -311,7 +332,7 @@ app.post('/api/posts', mockAuthMiddleware, async (req, res) => {
   }
 });
 
-app.put('/api/posts/:id', mockAuthMiddleware, async (req, res) => {
+app.put('/api/posts/:id', authMiddleware, async (req, res) => {
   try {
     const post = await Post.findOne({ 
       where: { 
@@ -335,11 +356,12 @@ app.put('/api/posts/:id', mockAuthMiddleware, async (req, res) => {
       post
     });
   } catch (error) {
+    console.error('Update post error:', error);
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 });
 
-app.delete('/api/posts/:id', mockAuthMiddleware, async (req, res) => {
+app.delete('/api/posts/:id', authMiddleware, async (req, res) => {
   try {
     const post = await Post.findOne({ 
       where: { 
@@ -360,6 +382,7 @@ app.delete('/api/posts/:id', mockAuthMiddleware, async (req, res) => {
 
     res.json({ message: 'Post deleted successfully' });
   } catch (error) {
+    console.error('Delete post error:', error);
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 });
@@ -367,7 +390,7 @@ app.delete('/api/posts/:id', mockAuthMiddleware, async (req, res) => {
 // ====================
 // FILE UPLOAD ROUTES
 // ====================
-app.post('/api/upload', mockAuthMiddleware, upload.single('media'), (req, res) => {
+app.post('/api/upload', authMiddleware, upload.single('media'), (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ message: 'No file uploaded' });
@@ -395,7 +418,7 @@ app.use('/uploads', express.static(uploadsDir));
 // ====================
 // CONVERSATIONS ROUTES
 // ====================
-app.get('/api/conversations', mockAuthMiddleware, async (req, res) => {
+app.get('/api/conversations', authMiddleware, async (req, res) => {
   try {
     const conversations = await Conversation.findAll({ 
       where: { userId: req.user.id },
@@ -407,6 +430,7 @@ app.get('/api/conversations', mockAuthMiddleware, async (req, res) => {
       conversations
     });
   } catch (error) {
+    console.error('Get conversations error:', error);
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 });
@@ -418,7 +442,8 @@ app.get('/api/test', (req, res) => {
   res.json({ 
     message: 'Hello from the Social Media Manager API!', 
     status: 'success',
-    database: 'PostgreSQL'
+    database: process.env.DATABASE_URL ? 'PostgreSQL' : 'SQLite',
+    environment: process.env.NODE_ENV || 'development'
   });
 });
 
@@ -431,7 +456,8 @@ app.get('/api/health', async (req, res) => {
     
     res.json({
       status: 'OK',
-      database: 'PostgreSQL',
+      database: process.env.DATABASE_URL ? 'PostgreSQL' : 'SQLite',
+      environment: process.env.NODE_ENV || 'development',
       users: usersCount,
       socialAccounts: accountsCount,
       posts: postsCount,
@@ -447,7 +473,7 @@ app.get('/api/health', async (req, res) => {
 });
 
 // ====================
-// AI AUTO-REPLY SYSTEM
+// AI AUTO-REPLY SYSTEM (Optional)
 // ====================
 app.get('/webhook', (req, res) => {
   const VERIFY_TOKEN = process.env.FB_VERIFY_TOKEN || 'social_media_manager_token';
@@ -484,6 +510,11 @@ app.post('/webhook', async (req, res) => {
 });
 
 async function handleMessage(event) {
+  if (!openai) {
+    console.log('OpenAI not configured - skipping AI reply');
+    return;
+  }
+
   const senderId = event.sender.id;
   const messageText = event.message.text;
   
@@ -537,6 +568,10 @@ async function handleMessage(event) {
 }
 
 async function generateAutoReply(message, conversationHistory = []) {
+  if (!openai) {
+    return "Thanks for your message! Our team will get back to you shortly.";
+  }
+
   try {
     const prompt = `You are a customer service agent for a business. 
     Based on the following conversation history and new message, provide a helpful, friendly response.
@@ -572,6 +607,15 @@ async function generateAutoReply(message, conversationHistory = []) {
   }
 }
 
+// Serve static files in production
+if (process.env.NODE_ENV === 'production') {
+  app.use(express.static(path.join(__dirname, '../client/dist')));
+  
+  app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, '../client/dist/index.html'));
+  });
+}
+
 // START SERVER
 const startServer = async () => {
   try {
@@ -582,12 +626,12 @@ const startServer = async () => {
     await initializeDefaultData();
     
     // Start server
-    app.listen(PORT, () => {
-      console.log(`✓ Server is running on http://localhost:${PORT}`);
-      console.log(`✓ PostgreSQL Database Connected`);
-      console.log(`✓ AI Auto-Reply System Ready`);
-      console.log(`✓ File Upload System Ready`);
-      console.log(`✓ Webhook: http://localhost:${PORT}/webhook`);
+    app.listen(PORT, '0.0.0.0', () => {
+      console.log(`✅ Server is running on port ${PORT}`);
+      console.log(`✅ Environment: ${process.env.NODE_ENV || 'development'}`);
+      console.log(`✅ Database: ${process.env.DATABASE_URL ? 'PostgreSQL' : 'SQLite'}`);
+      console.log(`✅ File Upload System Ready`);
+      console.log(`✅ API Available at: http://localhost:${PORT}/api`);
     });
   } catch (error) {
     console.error('❌ Failed to start server:', error);
