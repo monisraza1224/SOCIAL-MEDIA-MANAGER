@@ -1,5 +1,6 @@
-const { Sequelize, DataTypes } = require('sequelize');
+const { DataTypes } = require('sequelize');
 const { sequelize } = require('../database');
+const bcrypt = require('bcryptjs');
 
 // User Model
 const User = sequelize.define('User', {
@@ -30,11 +31,19 @@ const User = sequelize.define('User', {
     defaultValue: 'editor'
   }
 }, {
-  tableName: 'users',
-  timestamps: true
+  hooks: {
+    beforeCreate: async (user) => {
+      user.password = await bcrypt.hash(user.password, 12);
+    },
+    beforeUpdate: async (user) => {
+      if (user.changed('password')) {
+        user.password = await bcrypt.hash(user.password, 12);
+      }
+    }
+  }
 });
 
-// SocialAccount Model
+// Social Account Model
 const SocialAccount = sequelize.define('SocialAccount', {
   id: {
     type: DataTypes.INTEGER,
@@ -42,7 +51,7 @@ const SocialAccount = sequelize.define('SocialAccount', {
     autoIncrement: true
   },
   platform: {
-    type: DataTypes.ENUM('facebook', 'instagram', 'tiktok', 'whatsapp'),
+    type: DataTypes.ENUM('facebook', 'instagram', 'twitter', 'linkedin', 'tiktok'),
     allowNull: false
   },
   accountName: {
@@ -55,19 +64,15 @@ const SocialAccount = sequelize.define('SocialAccount', {
   },
   accessToken: {
     type: DataTypes.TEXT,
-    allowNull: true
+    allowNull: false
   },
   pageId: {
-    type: DataTypes.STRING,
-    allowNull: true
+    type: DataTypes.STRING
   },
   isActive: {
     type: DataTypes.BOOLEAN,
     defaultValue: true
   }
-}, {
-  tableName: 'social_accounts',
-  timestamps: true
 });
 
 // Post Model
@@ -86,7 +91,7 @@ const Post = sequelize.define('Post', {
     allowNull: false
   },
   hashtags: {
-    type: DataTypes.JSONB,
+    type: DataTypes.JSON,
     defaultValue: []
   },
   cta: {
@@ -94,11 +99,11 @@ const Post = sequelize.define('Post', {
     defaultValue: ''
   },
   mediaType: {
-    type: DataTypes.ENUM('text', 'image', 'video', 'carousel', 'reel'),
+    type: DataTypes.ENUM('image', 'video', 'text'),
     allowNull: false
   },
   mediaUrls: {
-    type: DataTypes.JSONB,
+    type: DataTypes.JSON,
     defaultValue: []
   },
   scheduledFor: {
@@ -107,15 +112,12 @@ const Post = sequelize.define('Post', {
   },
   status: {
     type: DataTypes.ENUM('draft', 'scheduled', 'published', 'failed'),
-    defaultValue: 'draft'
+    defaultValue: 'scheduled'
   },
   selectedAccounts: {
-    type: DataTypes.JSONB,
+    type: DataTypes.JSON,
     defaultValue: []
   }
-}, {
-  tableName: 'posts',
-  timestamps: true
 });
 
 // Conversation Model
@@ -133,28 +135,33 @@ const Conversation = sequelize.define('Conversation', {
     type: DataTypes.STRING,
     defaultValue: 'facebook'
   },
-  status: {
-    type: DataTypes.ENUM('active', 'closed', 'archived'),
-    defaultValue: 'active'
-  },
   messages: {
-    type: DataTypes.JSONB,
+    type: DataTypes.JSON,
     defaultValue: []
+  },
+  status: {
+    type: DataTypes.ENUM('active', 'resolved', 'archived'),
+    defaultValue: 'active'
   }
-}, {
-  tableName: 'conversations',
-  timestamps: true
 });
 
 // Define Relationships
-User.hasMany(SocialAccount, { foreignKey: 'userId' });
+User.hasMany(SocialAccount, { foreignKey: 'userId', onDelete: 'CASCADE' });
 SocialAccount.belongsTo(User, { foreignKey: 'userId' });
 
-User.hasMany(Post, { foreignKey: 'userId' });
+User.hasMany(Post, { foreignKey: 'userId', onDelete: 'CASCADE' });
 Post.belongsTo(User, { foreignKey: 'userId' });
 
-User.hasMany(Conversation, { foreignKey: 'userId' });
-Conversation.belongsTo(User, { foreignKey: 'userId' });
+Post.belongsToMany(SocialAccount, { 
+  through: 'PostAccounts',
+  foreignKey: 'postId',
+  otherKey: 'accountId'
+});
+SocialAccount.belongsToMany(Post, { 
+  through: 'PostAccounts',
+  foreignKey: 'accountId',
+  otherKey: 'postId'
+});
 
 module.exports = {
   User,
