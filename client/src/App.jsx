@@ -114,6 +114,110 @@ function LoginPage({ onLogin }) {
     onLogin(email, password)
   }
 
+  // Add this after the LoginPage component in your App.jsx
+
+// Registration Component - ADD THIS
+function RegisterPage({ onRegister, onSwitchToLogin }) {
+  const [username, setUsername] = useState('')
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [isRegistering, setIsRegistering] = useState(false)
+
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    setIsRegistering(true)
+    try {
+      await onRegister(username, email, password)
+    } finally {
+      setIsRegistering(false)
+    }
+  }
+
+  function App() {
+  const [user, setUser] = useState(null)
+  const [token, setToken] = useState(localStorage.getItem('token'))
+  const [posts, setPosts] = useState([])
+  const [socialAccounts, setSocialAccounts] = useState([])
+  const [conversations, setConversations] = useState([])
+  const [activeTab, setActiveTab] = useState('dashboard')
+  const [isLogin, setIsLogin] = useState(true) // Add this state
+
+  // Add registration handler
+  const handleRegister = async (username, email, password) => {
+    try {
+      const response = await axios.post(`${API_BASE}/auth/register`, {
+        username,
+        email,
+        password
+      })
+      
+      setToken(response.data.token)
+      setUser(response.data.user)
+      localStorage.setItem('token', response.data.token)
+      console.log('✅ Registration successful')
+    } catch (error) {
+      console.error('❌ Registration failed:', error)
+      alert('Registration failed: ' + (error.response?.data?.message || error.message))
+    }
+  }
+
+  // Update the login check
+  if (!user) {
+    return isLogin ? (
+      <LoginPage 
+        onLogin={handleLogin} 
+        onSwitchToRegister={() => setIsLogin(false)} 
+      />
+    ) : (
+      <RegisterPage 
+        onRegister={handleRegister} 
+        onSwitchToLogin={() => setIsLogin(true)} 
+      />
+    )
+  }
+    
+  return (
+    <div className="login-page">
+      <div className="login-container">
+        <h1>Social Media Manager</h1>
+        <h3>Create New Account</h3>
+        <form onSubmit={handleSubmit} className="login-form">
+          <input
+            type="text"
+            placeholder="Username"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            required
+          />
+          <input
+            type="email"
+            placeholder="Email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+          />
+          <input
+            type="password"
+            placeholder="Password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+          />
+          <button type="submit" disabled={isRegistering}>
+            {isRegistering ? 'Creating Account...' : 'Register'}
+          </button>
+        </form>
+        <p>
+          Already have an account?{' '}
+          <button onClick={onSwitchToLogin} className="link-btn">
+            Login here
+          </button>
+        </p>
+      </div>
+    </div>
+  )
+}
+  
   return (
     <div className="login-page">
       <div className="login-container">
