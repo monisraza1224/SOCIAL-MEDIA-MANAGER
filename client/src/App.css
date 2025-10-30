@@ -122,6 +122,287 @@ body {
   background: #dc2626;
 }
 
+/* Calendar Styles */
+.calendar-view {
+  padding: 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.calendar-header {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.calendar-header h2 {
+  color: #2c3e50;
+  margin-bottom: 5px;
+}
+
+.calendar-header p {
+  color: #7f8c8d;
+  font-size: 16px;
+}
+
+.calendar-navigation {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  background: white;
+  padding: 15px;
+  border-radius: 10px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.calendar-navigation h3 {
+  margin: 0;
+  color: #2c3e50;
+  font-size: 1.5em;
+}
+
+.nav-btn {
+  background: #3498db;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background 0.3s;
+}
+
+.nav-btn:hover {
+  background: #2980b9;
+}
+
+.calendar-grid {
+  background: white;
+  border-radius: 10px;
+  box-shadow: 0 2px 20px rgba(0,0,0,0.1);
+  overflow: hidden;
+  margin-bottom: 30px;
+}
+
+.calendar-weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  background: #34495e;
+  color: white;
+}
+
+.weekday-header {
+  padding: 15px;
+  text-align: center;
+  font-weight: bold;
+  font-size: 14px;
+}
+
+.calendar-days {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 1px;
+  background: #ecf0f1;
+}
+
+.calendar-day {
+  background: white;
+  min-height: 100px;
+  padding: 10px;
+  cursor: pointer;
+  transition: all 0.3s;
+  border: 1px solid #ecf0f1;
+  position: relative;
+}
+
+.calendar-day:hover {
+  background: #f8f9fa;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.calendar-day.empty {
+  background: #f8f9fa;
+  cursor: default;
+}
+
+.calendar-day.selected {
+  background: #3498db;
+  color: white;
+}
+
+.calendar-day.has-posts {
+  background: #e8f6f3;
+  border-left: 4px solid #2ecc71;
+}
+
+.calendar-day.selected.has-posts {
+  background: #2980b9;
+  border-left: 4px solid #2ecc71;
+}
+
+.day-number {
+  font-size: 16px;
+  font-weight: bold;
+  display: block;
+}
+
+.post-indicator {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  background: #2ecc71;
+  color: white;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: bold;
+}
+
+.selected-date-posts {
+  background: white;
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  margin-bottom: 30px;
+}
+
+.selected-date-posts h4 {
+  color: #2c3e50;
+  margin-bottom: 15px;
+  border-bottom: 2px solid #3498db;
+  padding-bottom: 10px;
+}
+
+.no-posts {
+  text-align: center;
+  color: #7f8c8d;
+  font-style: italic;
+  padding: 20px;
+}
+
+.posts-list {
+  display: grid;
+  gap: 15px;
+}
+
+.post-item {
+  background: #f8f9fa;
+  padding: 15px;
+  border-radius: 8px;
+  border-left: 4px solid #3498db;
+}
+
+.post-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.post-header h5 {
+  margin: 0;
+  color: #2c3e50;
+  font-size: 16px;
+}
+
+.post-status {
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: bold;
+  text-transform: uppercase;
+}
+
+.post-status.scheduled {
+  background: #fff3cd;
+  color: #856404;
+}
+
+.post-status.published {
+  background: #d1ecf1;
+  color: #0c5460;
+}
+
+.post-content {
+  color: #5a6c7d;
+  margin-bottom: 10px;
+  line-height: 1.4;
+}
+
+.post-meta {
+  display: flex;
+  gap: 15px;
+  font-size: 12px;
+  color: #7f8c8d;
+  margin-bottom: 10px;
+}
+
+.post-platforms {
+  font-size: 12px;
+}
+
+.platform-tag {
+  background: #e9ecef;
+  padding: 2px 8px;
+  border-radius: 12px;
+  margin-left: 5px;
+  font-size: 11px;
+}
+
+.calendar-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 20px;
+  margin-top: 30px;
+}
+
+.stat-card {
+  background: white;
+  padding: 20px;
+  border-radius: 10px;
+  text-align: center;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  border-top: 4px solid #3498db;
+}
+
+.stat-number {
+  font-size: 2em;
+  font-weight: bold;
+  color: #2c3e50;
+  margin-bottom: 5px;
+}
+
+.stat-label {
+  color: #7f8c8d;
+  font-size: 14px;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .calendar-day {
+    min-height: 80px;
+    padding: 5px;
+  }
+  
+  .day-number {
+    font-size: 14px;
+  }
+  
+  .calendar-navigation {
+    flex-direction: column;
+    gap: 10px;
+  }
+  
+  .calendar-stats {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
 /* Navigation */
 .navigation {
   background: white;
