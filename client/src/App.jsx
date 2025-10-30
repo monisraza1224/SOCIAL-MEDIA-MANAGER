@@ -1061,12 +1061,185 @@ function EnhancedPostsManager({ posts, socialAccounts, onPostCreated, onPostUpda
 // Keep your existing CalendarView, AccountsManager, ConversationsManager components
 // ... (they remain the same as in your working version)
 
-// Calendar View Component (simplified for now)
+// Calendar View Component
 function CalendarView({ posts }) {
+  const [currentDate, setCurrentDate] = useState(new Date())
+  const [selectedDate, setSelectedDate] = useState(new Date())
+
+  // Get current month and year
+  const currentMonth = currentDate.getMonth()
+  const currentYear = currentDate.getFullYear()
+
+  // Navigate months
+  const prevMonth = () => {
+    setCurrentDate(new Date(currentYear, currentMonth - 1, 1))
+  }
+
+  const nextMonth = () => {
+    setCurrentDate(new Date(currentYear, currentMonth + 1, 1))
+  }
+
+  // Get days in month
+  const getDaysInMonth = (year, month) => {
+    return new Date(year, month + 1, 0).getDate()
+  }
+
+  // Get first day of month
+  const getFirstDayOfMonth = (year, month) => {
+    return new Date(year, month, 1).getDay()
+  }
+
+  // Generate calendar days
+  const generateCalendarDays = () => {
+    const daysInMonth = getDaysInMonth(currentYear, currentMonth)
+    const firstDay = getFirstDayOfMonth(currentYear, currentMonth)
+    const days = []
+
+    // Add empty days for padding
+    for (let i = 0; i < firstDay; i++) {
+      days.push(null)
+    }
+
+    // Add days of the month
+    for (let day = 1; day <= daysInMonth; day++) {
+      const date = new Date(currentYear, currentMonth, day)
+      const dayPosts = posts.filter(post => {
+        const postDate = new Date(post.scheduledFor)
+        return postDate.toDateString() === date.toDateString()
+      })
+      days.push({
+        date,
+        day,
+        hasPosts: dayPosts.length > 0,
+        postCount: dayPosts.length,
+        posts: dayPosts
+      })
+    }
+
+    return days
+  }
+
+  // Get posts for selected date
+  const getPostsForSelectedDate = () => {
+    return posts.filter(post => {
+      const postDate = new Date(post.scheduledFor)
+      return postDate.toDateString() === selectedDate.toDateString()
+    })
+  }
+
+  const calendarDays = generateCalendarDays()
+  const selectedDatePosts = getPostsForSelectedDate()
+  const monthNames = ["January", "February", "March", "April", "May", "June",
+    "July", "August", "September", "October", "November", "December"
+  ]
+
   return (
     <div className="calendar-view">
-      <h2>📅 Calendar View</h2>
-      <p>Calendar functionality - Coming soon with enhanced features</p>
+      <div className="calendar-header">
+        <h2>📅 Content Calendar</h2>
+        <p>Manage and view your scheduled posts</p>
+      </div>
+
+      {/* Calendar Navigation */}
+      <div className="calendar-navigation">
+        <button onClick={prevMonth} className="nav-btn">← Previous</button>
+        <h3>{monthNames[currentMonth]} {currentYear}</h3>
+        <button onClick={nextMonth} className="nav-btn">Next →</button>
+      </div>
+
+      {/* Calendar Grid */}
+      <div className="calendar-grid">
+        {/* Weekday Headers */}
+        <div className="calendar-weekdays">
+          {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
+            <div key={day} className="weekday-header">{day}</div>
+          ))}
+        </div>
+
+        {/* Calendar Days */}
+        <div className="calendar-days">
+          {calendarDays.map((dayInfo, index) => (
+            <div
+              key={index}
+              className={`calendar-day ${!dayInfo ? 'empty' : ''} ${
+                dayInfo && dayInfo.date.toDateString() === selectedDate.toDateString() ? 'selected' : ''
+              } ${dayInfo && dayInfo.hasPosts ? 'has-posts' : ''}`}
+              onClick={() => dayInfo && setSelectedDate(dayInfo.date)}
+            >
+              {dayInfo && (
+                <>
+                  <span className="day-number">{dayInfo.day}</span>
+                  {dayInfo.hasPosts && (
+                    <div className="post-indicator">
+                      <span className="post-count">{dayInfo.postCount}</span>
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Selected Date Posts */}
+      <div className="selected-date-posts">
+        <h4>📝 Posts for {selectedDate.toLocaleDateString()}</h4>
+        {selectedDatePosts.length === 0 ? (
+          <p className="no-posts">No posts scheduled for this date</p>
+        ) : (
+          <div className="posts-list">
+            {selectedDatePosts.map(post => (
+              <div key={post.id} className="post-item">
+                <div className="post-header">
+                  <h5>{post.title}</h5>
+                  <span className={`post-status ${post.status}`}>{post.status}</span>
+                </div>
+                <p className="post-content">{post.content}</p>
+                <div className="post-meta">
+                  <span>⏰ {new Date(post.scheduledFor).toLocaleTimeString()}</span>
+                  <span>📱 {post.mediaType}</span>
+                </div>
+                {post.selectedAccounts && post.selectedAccounts.length > 0 && (
+                  <div className="post-platforms">
+                    <strong>Platforms: </strong>
+                    {post.selectedAccounts.map((account, idx) => (
+                      <span key={idx} className="platform-tag">
+                        {typeof account === 'object' ? account.name : account}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Calendar Stats */}
+      <div className="calendar-stats">
+        <div className="stat-card">
+          <div className="stat-number">{posts.length}</div>
+          <div className="stat-label">Total Posts</div>
+        </div>
+        <div className="stat-card">
+          <div className="stat-number">
+            {posts.filter(p => p.status === 'scheduled').length}
+          </div>
+          <div className="stat-label">Scheduled</div>
+        </div>
+        <div className="stat-card">
+          <div className="stat-number">
+            {posts.filter(p => p.status === 'published').length}
+          </div>
+          <div className="stat-label">Published</div>
+        </div>
+        <div className="stat-card">
+          <div className="stat-number">
+            {new Set(posts.flatMap(p => p.selectedAccounts || [])).size}
+          </div>
+          <div className="stat-label">Active Platforms</div>
+        </div>
+      </div>
     </div>
   )
 }
