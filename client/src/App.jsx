@@ -1,18 +1,21 @@
-// src/App.js
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import './App.css';
 
+// API Base URL
 const API_BASE = 'https://social-media-manager-2.onrender.com/api';
 
 function App() {
-  const [user, setUser] = useState(null);
-  const [token, setToken] = useState(localStorage.getItem('token'));
-  const [posts, setPosts] = useState([]);
-  const [socialAccounts, setSocialAccounts] = useState([]);
-  const [conversations, setConversations] = useState([]);
+  const [user, setUser] = useState<any>(null);
+  const [token, setToken] = useState<string | null>(localStorage.getItem('token'));
+  const [posts, setPosts] = useState<any[]>([]);
+  const [socialAccounts, setSocialAccounts] = useState<any[]>([]);
+  const [conversations, setConversations] = useState<any[]>([]);
   const [activeTab, setActiveTab] = useState('dashboard');
 
+  /* ------------------------------------------------------------------ */
+  /*  AUTH & DATA FETCHING                                              */
+  /* ------------------------------------------------------------------ */
   useEffect(() => {
     if (token) {
       axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
@@ -22,27 +25,27 @@ function App() {
 
   const fetchUserData = async () => {
     try {
-      const [p, a, c] = await Promise.all([
+      const [pRes, aRes, cRes] = await Promise.all([
         axios.get(`${API_BASE}/posts`),
         axios.get(`${API_BASE}/social-accounts`),
         axios.get(`${API_BASE}/conversations`),
       ]);
-      setPosts(p.data.posts || []);
-      setSocialAccounts(a.data.accounts || []);
-      setConversations(c.data.conversations || []);
-    } catch (err) {
+      setPosts(pRes.data.posts || []);
+      setSocialAccounts(aRes.data.accounts || []);
+      setConversations(cRes.data.conversations || []);
+    } catch (err: any) {
       console.error(err);
       if (err.response?.status === 401) handleLogout();
     }
   };
 
-  const handleLogin = async (email, password) => {
+  const handleLogin = async (email: string, password: string) => {
     try {
       const { data } = await axios.post(`${API_BASE}/auth/login`, { email, password });
       setToken(data.token);
       setUser(data.user);
       localStorage.setItem('token', data.token);
-    } catch (err) {
+    } catch (err: any) {
       alert('Login failed: ' + (err.response?.data?.message || err.message));
     }
   };
@@ -63,10 +66,13 @@ function App() {
     <div className="app">
       <Header user={user} onLogout={handleLogout} />
       <Navigation activeTab={activeTab} setActiveTab={setActiveTab} />
-
       <main className="main-content">
         {activeTab === 'dashboard' && (
-          <ProfessionalDashboard posts={posts} socialAccounts={socialAccounts} conversations={conversations} />
+          <ProfessionalDashboard
+            posts={posts}
+            socialAccounts={socialAccounts}
+            conversations={conversations}
+          />
         )}
         {activeTab === 'calendar' && <CalendarView posts={posts} />}
         {activeTab === 'posts' && (
@@ -82,21 +88,24 @@ function App() {
           <AccountsManager accounts={socialAccounts} onAccountsUpdate={fetchUserData} />
         )}
         {activeTab === 'conversations' && (
-          <ConversationsManager conversations={conversations} onConversationsUpdate={fetchUserData} />
+          <ConversationsManager
+            conversations={conversations}
+            onConversationsUpdate={fetchUserData}
+          />
         )}
       </main>
     </div>
   );
 }
 
-/* -------------------------------------------------
-   LOGIN, HEADER, NAVIGATION
-   ------------------------------------------------- */
-function LoginPage({ onLogin }) {
+/* ------------------------------------------------------------------ */
+/*  LOGIN PAGE                                                        */
+/* ------------------------------------------------------------------ */
+function LoginPage({ onLogin }: { onLogin: (e: string, p: string) => void }) {
   const [email, setEmail] = useState('admin@test.com');
   const [password, setPassword] = useState('password123');
 
-  const handleSubmit = e => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onLogin(email, password);
   };
@@ -106,8 +115,20 @@ function LoginPage({ onLogin }) {
       <div className="login-container">
         <h1>Social Media Manager</h1>
         <form onSubmit={handleSubmit} className="login-form">
-          <input type="email" placeholder="Email" value={email} onChange={e => setEmail(e.target.value)} required />
-          <input type="password" placeholder="Password" value={password} onChange={e => setPassword(e.target.value)} required />
+          <input
+            type="email"
+            placeholder="Email"
+            value={email}
+            onChange={e => setEmail(e.target.value)}
+            required
+          />
+          <input
+            type="password"
+            placeholder="Password"
+            value={password}
+            onChange={e => setPassword(e.target.value)}
+            required
+          />
           <button type="submit">Login</button>
         </form>
         <p className="demo-credentials">Demo: admin@test.com / password123</p>
@@ -116,27 +137,41 @@ function LoginPage({ onLogin }) {
   );
 }
 
-function Header({ user, onLogout }) {
+/* ------------------------------------------------------------------ */
+/*  HEADER                                                            */
+/* ------------------------------------------------------------------ */
+function Header({ user, onLogout }: { user: any; onLogout: () => void }) {
   return (
     <header className="header">
       <div className="header-content">
         <h1>Social Media Manager</h1>
         <div className="user-info">
           <span>Welcome, {user.username}</span>
-          <button onClick={onLogout} className="logout-btn">Logout</button>
+          <button onClick={onLogout} className="logout-btn">
+            Logout
+          </button>
         </div>
       </div>
     </header>
   );
 }
 
-function Navigation({ activeTab, setActiveTab }) {
+/* ------------------------------------------------------------------ */
+/*  NAVIGATION – WITH EMOJIS                                          */
+/* ------------------------------------------------------------------ */
+function Navigation({
+  activeTab,
+  setActiveTab,
+}: {
+  activeTab: string;
+  setActiveTab: (t: string) => void;
+}) {
   const tabs = [
-    { id: 'dashboard', label: 'Dashboard', icon: 'Chart' },
+    { id: 'dashboard', label: 'Dashboard', icon: 'BarChart' },
     { id: 'calendar', label: 'Calendar', icon: 'Calendar' },
-    { id: 'posts', label: 'Posts', icon: 'Document' },
+    { id: 'posts', label: 'Posts', icon: 'FileText' },
     { id: 'accounts', label: 'Accounts', icon: 'Users' },
-    { id: 'conversations', label: 'Messages', icon: 'Message' },
+    { id: 'conversations', label: 'Messages', icon: 'MessageSquare' },
   ];
 
   return (
@@ -155,160 +190,281 @@ function Navigation({ activeTab, setActiveTab }) {
   );
 }
 
-/* -------------------------------------------------
-   DASHBOARD (unchanged from previous version)
-   ------------------------------------------------- */
-// ... (ProfessionalDashboard, KpiCard, MetricCard, RecentCard) – copy from previous response
+/* ------------------------------------------------------------------ */
+/*  PROFESSIONAL DASHBOARD – WITH EMOJIS                              */
+/* ------------------------------------------------------------------ */
+function ProfessionalDashboard({
+  posts,
+  socialAccounts,
+  conversations,
+}: {
+  posts: any[];
+  socialAccounts: any[];
+  conversations: any[];
+}) {
+  const scheduled = posts.filter(p => p.status === 'scheduled').length;
+  const published = posts.filter(p => p.status === 'published').length;
+  const activeAccounts = new Set(
+    posts.flatMap(p => p.selectedAccounts?.map((a: any) => a.id) || [])
+  ).size;
 
-/* -------------------------------------------------
-   ENHANCED POSTS MANAGER – PROFESSIONAL UI
-   ------------------------------------------------- */
-function EnhancedPostsManager({ posts, socialAccounts, onPostCreated, onPostUpdated, onPostDeleted }) {
-  const [showForm, setShowForm] = useState(false);
-  const [editing, setEditing] = useState(null);
-  const [newPost, setNewPost] = useState({
-    title: '', content: '', hashtags: '', cta: '', mediaType: 'text',
-    mediaFiles: [], scheduledFor: '', selectedAccounts: []
+  return (
+    <section className="professional-dashboard">
+      <div className="dashboard-header">
+        <h2>Dashboard Overview</h2>
+        <div className="date-range">Last 30 Days</div>
+      </div>
+
+      <div className="stats-grid-pro">
+        <StatCardPro
+          icon="FileText"
+          label="Total Posts"
+          value={posts.length}
+          trend="+12%"
+          type="primary"
+        />
+        <StatCardPro
+          icon="Clock"
+          label="Scheduled"
+          value={scheduled}
+          trend="+5%"
+          type="warning"
+        />
+        <StatCardPro
+          icon="CheckCircle"
+          label="Published"
+          value={published}
+          trend="+18%"
+          type="success"
+        />
+        <StatCardPro
+          icon="Users"
+          label="Active Accounts"
+          value={activeAccounts}
+          trend="+3"
+          type="info"
+        />
+      </div>
+
+      <div className="dashboard-content-pro">
+        <div className="content-column">
+          <div className="content-card">
+            <div className="card-header">
+              <h3>Recent Posts</h3>
+              <span className="badge success">Live</span>
+            </div>
+            <div className="card-content">
+              {posts.length === 0 ? (
+                <div className="empty-state">
+                  <div className="empty-icon">FileText</div>
+                  <p>No posts yet</p>
+                </div>
+              ) : (
+                posts.slice(0, 3).map(p => (
+                  <div key={p.id} className="post-item-pro">
+                    <div className="post-preview">
+                      <div className="post-avatar published">CheckCircle</div>
+                      <div className="post-details">
+                        <strong>{p.title}</strong>
+                        <div className="post-time">
+                          {new Date(p.scheduledFor).toLocaleString()}
+                        </div>
+                      </div>
+                    </div>
+                    <span className="post-status-badge success">Published</span>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+
+        <div className="content-column">
+          <div className="content-card">
+            <div className="card-header">
+              <h3>Recent Conversations</h3>
+              <span className="badge info">Active</span>
+            </div>
+            <div className="card-content">
+              {conversations.length === 0 ? (
+                <div className="empty-state">
+                  <div className="empty-icon">MessageSquare</div>
+                  <p>No messages</p>
+                </div>
+              ) : (
+                conversations.slice(0, 3).map(c => (
+                  <div key={c.id} className="conversation-item-pro">
+                    <div className="conversation-avatar">User</div>
+                    <div className="conversation-details">
+                      <strong>{c.from}</strong>
+                      <p>{c.lastMessage}</p>
+                    </div>
+                    <div className="conversation-time">
+                      {new Date(c.timestamp).toLocaleDateString()}
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/*  STAT CARD PRO                                                     */
+/* ------------------------------------------------------------------ */
+function StatCardPro({
+  icon,
+  label,
+  value,
+  trend,
+  type,
+}: {
+  icon: string;
+  label: string;
+  value: number | string;
+  trend?: string;
+  type: 'primary' | 'success' | 'warning' | 'info';
+}) {
+  return (
+    <div className={`stat-card-pro ${type}`}>
+      <div className="stat-icon">{icon}</div>
+      <div className="stat-content">
+        <h3>{label}</h3>
+        <div className="stat-number">{value}</div>
+        {trend && <div className="stat-trend">{trend}</div>}
+      </div>
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/*  ENHANCED POSTS MANAGER – WITH FILE UPLOAD & EMOJIS                */
+/* ------------------------------------------------------------------ */
+function EnhancedPostsManager({
+  posts,
+  socialAccounts,
+  onPostCreated,
+}: {
+  posts: any[];
+  socialAccounts: any[];
+  onPostCreated: () => void;
+}) {
+  const [showModal, setShowModal] = useState(false);
+  const [form, setForm] = useState({
+    title: '',
+    content: '',
+    mediaType: 'text',
+    mediaFiles: [] as File[],
+    scheduledFor: '',
+    selectedAccounts: [] as string[],
   });
-  const [submitting, setSubmitting] = useState(false);
-  const [progress, setProgress] = useState({});
 
-  const availableAccounts = [
-    { id: 'fb1', platform: 'Facebook', name: 'Facebook Page 1', type: 'page' },
-    { id: 'fb2', platform: 'Facebook', name: 'Facebook Page 2', type: 'page' },
-    { id: 'fb3', platform: 'Facebook', name: 'Facebook Page 3', type: 'page' },
-    { id: 'ig1', platform: 'Instagram', name: 'Instagram Business 1', type: 'business' },
-    { id: 'ig2', platform: 'Instagram', name: 'Instagram Business 2', type: 'business' },
-    { id: 'ig3', platform: 'Instagram', name: 'Instagram Business 3', type: 'business' },
-    { id: 'wa1', platform: 'WhatsApp', name: 'WhatsApp Business', type: 'business' },
-    { id: 'tt1', platform: 'TikTok', name: 'TikTok Account', type: 'business' },
+  const accounts = [
+    { id: 'fb1', platform: 'Facebook', name: 'Page 1' },
+    { id: 'ig1', platform: 'Instagram', name: 'Business 1' },
+    { id: 'wa1', platform: 'WhatsApp', name: 'Business' },
+    { id: 'tt1', platform: 'TikTok', name: 'Account' },
   ];
 
-  const handleFileUpload = async files => {
-    const uploaded = [];
-    for (const f of files) {
-      const fd = new FormData(); fd.append('media', f);
-      setProgress(p => ({ ...p, [f.name]: 0 }));
-      try {
-        const { data } = await axios.post(`${API_BASE}/upload`, fd, {
-          onUploadProgress: e => {
-            const pct = Math.round((e.loaded * 100) / e.total);
-            setProgress(p => ({ ...p, [f.name]: pct }));
-          }
-        });
-        uploaded.push(data.fileUrl);
-      } catch { alert(`Upload failed: ${f.name}`); }
-    }
-    setNewPost(p => ({ ...p, mediaFiles: [...p.mediaFiles, ...uploaded] }));
+  const handleFileDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    const files = Array.from(e.dataTransfer.files);
+    setForm(f => ({ ...f, mediaFiles: [...f.mediaFiles, ...files] }));
   };
 
-  const handleCreate = async e => {
-    e.preventDefault(); setSubmitting(true);
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const formData = new FormData();
+    formData.append('title', form.title);
+    formData.append('content', form.content);
+    formData.append('mediaType', form.mediaType);
+    formData.append('scheduledFor', new Date(form.scheduledFor).toISOString());
+    form.selectedAccounts.forEach(id => formData.append('accountIds', id));
+    form.mediaFiles.forEach(file => formData.append('media', file));
+
     try {
-      await axios.post(`${API_BASE}/posts`, {
-        ...newPost,
-        hashtags: newPost.hashtags.split(',').map(t => t.trim()).filter(Boolean),
-        mediaUrls: newPost.mediaType === 'text' ? [] : newPost.mediaFiles,
-        scheduledFor: new Date(newPost.scheduledFor).toISOString(),
-        selectedAccounts: newPost.selectedAccounts,
+      await axios.post(`${API_BASE}/posts`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
       });
-      resetForm(); onPostCreated(); alert('Post scheduled!');
-    } catch (err) { alert(err.response?.data?.message || err.message); }
-    finally { setSubmitting(false); }
-  };
-
-  const resetForm = () => {
-    setNewPost({ title: '', content: '', hashtags: '', cta: '', mediaType: 'text', mediaFiles: [], scheduledFor: '', selectedAccounts: [] });
-    setEditing(null); setShowForm(false); setProgress({});
-  };
-
-  const toggleAccount = acc => {
-    setNewPost(p => ({
-      ...p,
-      selectedAccounts: p.selectedAccounts.find(a => a.id === acc.id)
-        ? p.selectedAccounts.filter(a => a.id !== acc.id)
-        : [...p.selectedAccounts, acc],
-    }));
-  };
-
-  const getPlatformIcon = p => {
-    const icons = { Facebook: 'Facebook', Instagram: 'Instagram', WhatsApp: 'WhatsApp', TikTok: 'TikTok' };
-    return icons[p] || 'Link';
+      setShowModal(false);
+      setForm({
+        title: '',
+        content: '',
+        mediaType: 'text',
+        mediaFiles: [],
+        scheduledFor: '',
+        selectedAccounts: [],
+      });
+      onPostCreated();
+    } catch (err: any) {
+      alert('Error: ' + (err.response?.data?.message || err.message));
+    }
   };
 
   return (
-    <div className="posts-manager-pro">
-      <div className="posts-header-pro">
-        <div>
-          <h2>Posts Management</h2>
-          <p>Create and schedule posts across all your social media accounts</p>
+    <div className="posts-manager">
+      <div className="posts-header">
+        <div className="header-content">
+          <h2>Posts Manager</h2>
+          <p>Schedule and publish across all platforms</p>
         </div>
-        <button className="create-post-btn" onClick={() => setShowForm(true)}>
-          + Create New Post
+        <button className="create-post-btn primary" onClick={() => setShowModal(true)}>
+          Create Post
         </button>
       </div>
 
-      {/* CREATE FORM */}
-      {showForm && (
-        <div className="modal-overlay">
+      {showModal && (
+        <div className="create-post-modal">
           <div className="modal-content">
             <div className="modal-header">
               <h3>Create New Post</h3>
-              <button className="close-btn" onClick={resetForm}>×</button>
+              <button className="close-btn" onClick={() => setShowModal(false)}>
+                ×
+              </button>
             </div>
-            <form onSubmit={handleCreate} className="post-form-pro">
-              {/* Title */}
+            <form onSubmit={handleSubmit} className="post-form">
               <div className="form-group">
-                <label>Post Title *</label>
+                <label>Title</label>
                 <input
-                  type="text"
-                  value={newPost.title}
-                  onChange={e => setNewPost(p => ({ ...p, title: e.target.value }))}
-                  placeholder="Enter a compelling post title..."
+                  value={form.title}
+                  onChange={e => setForm({ ...form, title: e.target.value })}
                   required
                 />
               </div>
 
-              {/* Content */}
               <div className="form-group">
-                <label>Content/Caption *</label>
+                <label>Content</label>
                 <textarea
-                  value={newPost.content}
-                  onChange={e => setNewPost(p => ({ ...p, content: e.target.value }))}
-                  placeholder="Write your post content here... Pro tip: Keep it engaging and include a call-to-action!"
-                  rows="4"
+                  rows={4}
+                  value={form.content}
+                  onChange={e => setForm({ ...form, content: e.target.value })}
                   required
                 />
-                <div className="char-count">{newPost.content.length}/2200 characters</div>
+                <div className="character-count">{form.content.length}/280</div>
               </div>
 
-              {/* Post Type */}
               <div className="form-group">
-                <label>Post Type *</label>
+                <label>Post Type</label>
                 <div className="post-type-grid">
-                  {[
-                    { type: 'text', icon: 'Document', label: 'Text Post', desc: 'Text only, no media' },
-                    { type: 'image', icon: 'Image', label: 'Image Post', desc: 'Single image' },
-                    { type: 'video', icon: 'Video', label: 'Video Post', desc: 'Single video' },
-                    { type: 'carousel', icon: 'Carousel', label: 'Carousel Post', desc: 'Multiple images' },
-                    { type: 'reel', icon: 'Reel', label: 'Reel/Short', desc: 'Short video content' },
-                  ].map(item => (
-                    <label key={item.type} className="post-type-option">
+                  {['text', 'image', 'video', 'carousel', 'reel'].map(type => (
+                    <label key={type} className="post-type-option">
                       <input
                         type="radio"
                         name="mediaType"
-                        value={item.type}
-                        checked={newPost.mediaType === item.type}
-                        onChange={e => setNewPost(p => ({
-                          ...p, mediaType: e.target.value, mediaFiles: e.target.value === 'text' ? [] : p.mediaFiles
-                        }))}
+                        value={type}
+                        checked={form.mediaType === type}
+                        onChange={e => setForm({ ...form, mediaType: e.target.value })}
                       />
-                      <span className="checkmark"></span>
                       <div className="post-type-info">
-                        <div className="post-type-icon">{item.icon}</div>
+                        <span className="post-type-icon">
+                          {type === 'text' ? 'Text' : type === 'image' ? 'Image' : type === 'video' ? 'Video' : type === 'carousel' ? 'Carousel' : 'Reel'}
+                        </span>
                         <div>
-                          <strong>{item.label}</strong>
-                          <span>{item.desc}</span>
+                          <strong>{type.charAt(0).toUpperCase() + type.slice(1)}</strong>
                         </div>
                       </div>
                     </label>
@@ -316,37 +472,55 @@ function EnhancedPostsManager({ posts, socialAccounts, onPostCreated, onPostUpda
                 </div>
               </div>
 
-              {/* File Upload */}
-              {newPost.mediaType !== 'text' && (
+              {form.mediaType !== 'text' && (
                 <div className="form-group">
-                  <label>Upload Media *</label>
+                  <label>Upload Media</label>
                   <div
-                    className="file-drop-zone"
-                    onDrop={e => { e.preventDefault(); handleFileUpload(Array.from(e.dataTransfer.files)); }}
+                    className="file-upload-zone"
+                    onDrop={handleFileDrop}
                     onDragOver={e => e.preventDefault()}
                   >
-                    <div className="drop-content">
-                      <div className="upload-icon">Folder</div>
+                    <div className="upload-content">
+                      <div className="upload-icon">Upload</div>
                       <h4>Drop files here</h4>
-                      <p>or</p>
-                      <label className="file-label">
+                      <p>or click to browse</p>
+                      <label className="file-input-label">
+                        Choose Files
                         <input
                           type="file"
                           multiple
-                          accept={newPost.mediaType === 'video' || newPost.mediaType === 'reel' ? 'video/*' : 'image/*'}
-                          onChange={e => handleFileUpload(Array.from(e.target.files))}
-                          style={{ display: 'none' }}
+                          hidden
+                          onChange={e => {
+                            if (e.target.files) {
+                              setForm(f => ({
+                                ...f,
+                                mediaFiles: [...f.mediaFiles, ...Array.from(e.target.files!)],
+                              }));
+                            }
+                          }}
                         />
-                        Browse Files
                       </label>
                     </div>
                   </div>
-                  {newPost.mediaFiles.length > 0 && (
+                  {form.mediaFiles.length > 0 && (
                     <div className="uploaded-files">
-                      {newPost.mediaFiles.map((url, i) => (
-                        <div key={i} className="file-item">
-                          <img src={url} alt="preview" />
-                          <button type="button" onClick={() => setNewPost(p => ({ ...p, mediaFiles: p.mediaFiles.filter((_, idx) => idx !== i) }))}>×</button>
+                      {form.mediaFiles.map((file, i) => (
+                        <div key={i} className="uploaded-file-item">
+                          <div className="file-preview">
+                            <span>{file.name}</span>
+                          </div>
+                          <button
+                            type="button"
+                            className="remove-file-btn"
+                            onClick={() =>
+                              setForm(f => ({
+                                ...f,
+                                mediaFiles: f.mediaFiles.filter((_, idx) => idx !== i),
+                              }))
+                            }
+                          >
+                            ×
+                          </button>
                         </div>
                       ))}
                     </div>
@@ -354,83 +528,51 @@ function EnhancedPostsManager({ posts, socialAccounts, onPostCreated, onPostUpda
                 </div>
               )}
 
-              {/* Hashtags */}
               <div className="form-group">
-                <label>Hashtags</label>
+                <label>Schedule Date & Time</label>
                 <input
-                  type="text"
-                  value={newPost.hashtags}
-                  onChange={e => setNewPost(p => ({ ...p, hashtags: e.target.value }))}
-                  placeholder="#social #media #marketing (comma separated)"
-                />
-                <div className="tip">Pro tip: Use 3-5 relevant hashtags for better reach</div>
-              </div>
-
-              {/* CTA */}
-              <div className="form-group">
-                <label>Call to Action</label>
-                <input
-                  type="text"
-                  value={newPost.cta}
-                  onChange={e => setNewPost(p => ({ ...p, cta: e.target.value }))}
-                  placeholder="Learn more, Shop now, Visit website, etc."
+                  type="datetime-local"
+                  value={form.scheduledFor}
+                  onChange={e => setForm({ ...form, scheduledFor: e.target.value })}
+                  required
                 />
               </div>
 
-              {/* Accounts */}
               <div className="form-group">
-                <label>Select Accounts to Post *</label>
-                {['Facebook', 'Instagram', 'WhatsApp', 'TikTok'].map(platform => (
-                  <div key={platform} className="platform-group">
-                    <h4 className="platform-title">{getPlatformIcon(platform)} {platform} {platform === 'Facebook' ? 'Pages' : 'Accounts'}</h4>
-                    <div className="accounts-grid">
-                      {availableAccounts
-                        .filter(a => a.platform === platform)
-                        .map(acc => (
-                          <label key={acc.id} className="account-checkbox">
-                            <input
-                              type="checkbox"
-                              checked={newPost.selectedAccounts.some(a => a.id === acc.id)}
-                              onChange={() => toggleAccount(acc)}
-                            />
-                            <span className="checkmark"></span>
-                            <div className="account-info">
-                              <div className="platform-badge">{acc.platform}</div>
-                              <strong>{acc.name}</strong>
-                              <span className="account-type">{acc.type}</span>
-                            </div>
-                          </label>
-                        ))}
+                <label>Select Accounts</label>
+                {accounts.map(acc => (
+                  <label key={acc.id} className="account-checkbox">
+                    <input
+                      type="checkbox"
+                      checked={form.selectedAccounts.includes(acc.id)}
+                      onChange={() => {
+                        setForm(f => ({
+                          ...f,
+                          selectedAccounts: f.selectedAccounts.includes(acc.id)
+                            ? f.selectedAccounts.filter(id => id !== acc.id)
+                            : [...f.selectedAccounts, acc.id],
+                        }));
+                      }}
+                    />
+                    <div className="account-info">
+                      <span className="account-platform">{acc.platform}</span>
+                      <strong>{acc.name}</strong>
                     </div>
-                  </div>
+                  </label>
                 ))}
-                {newPost.selectedAccounts.length > 0 && (
+                {form.selectedAccounts.length > 0 && (
                   <div className="selection-summary">
-                    Selected: {newPost.selectedAccounts.map(a => a.name).join(', ')}
+                    <strong>{form.selectedAccounts.length} account(s) selected</strong>
                   </div>
                 )}
               </div>
 
-              {/* Schedule */}
-              <div className="form-group">
-                <label>Schedule Date & Time *</label>
-                <input
-                  type="datetime-local"
-                  value={newPost.scheduledFor}
-                  onChange={e => setNewPost(p => ({ ...p, scheduledFor: e.target.value }))}
-                  required
-                />
-                <div className="tip">Schedule in your audience's peak engagement times</div>
-              </div>
-
               <div className="form-actions">
-                <button type="button" className="cancel-btn" onClick={resetForm}>Cancel</button>
-                <button
-                  type="submit"
-                  className="submit-btn"
-                  disabled={submitting || newPost.selectedAccounts.length === 0}
-                >
-                  {submitting ? 'Scheduling...' : `Schedule to ${newPost.selectedAccounts.length} Account(s)`}
+                <button type="button" className="cancel-btn" onClick={() => setShowModal(false)}>
+                  Cancel
+                </button>
+                <button type="submit" className="submit-btn">
+                  Schedule Post
                 </button>
               </div>
             </form>
@@ -438,37 +580,22 @@ function EnhancedPostsManager({ posts, socialAccounts, onPostCreated, onPostUpda
         </div>
       )}
 
-      {/* POSTS LIST */}
-      <div className="posts-list-pro">
-        <h3>Scheduled Posts ({posts.filter(p => p.status === 'scheduled').length})</h3>
-        {posts.filter(p => p.status === 'scheduled').length === 0 ? (
-          <p className="empty-state">No posts scheduled yet. Create your first post!</p>
+      <div className="posts-list">
+        {posts.length === 0 ? (
+          <div className="no-data">No posts scheduled</div>
         ) : (
-          posts.filter(p => p.status === 'scheduled').map(post => (
-            <div key={post.id} className="post-card-pro">
-              <h4>{post.title}</h4>
-              <p>{post.content}</p>
-              <div className="post-meta">
-                <span>{new Date(post.scheduledFor).toLocaleString()}</span>
-                <span className="status scheduled">Scheduled</span>
+          posts.map(p => (
+            <div key={p.id} className={`post-card ${p.status}`}>
+              <div className="post-header">
+                <h3>{p.title}</h3>
+                <span className={`post-type-badge ${p.mediaType}`}>
+                  {p.mediaType}
+                </span>
               </div>
-            </div>
-          ))
-        )}
-      </div>
-
-      <div className="posts-list-pro">
-        <h3>Published Posts ({posts.filter(p => p.status === 'published').length})</h3>
-        {posts.filter(p => p.status === 'published').length === 0 ? (
-          <p className="empty-state">No posts published yet.</p>
-        ) : (
-          posts.filter(p => p.status === 'published').map(post => (
-            <div key={post.id} className="post-card-pro published">
-              <h4>{post.title}</h4>
-              <p>{post.content}</p>
+              <p>{p.content}</p>
               <div className="post-meta">
-                <span>{new Date(post.scheduledFor).toLocaleString()}</span>
-                <span className="status published">Published</span>
+                <span>{new Date(p.scheduledFor).toLocaleString()}</span>
+                <span className={`status ${p.status}`}>{p.status}</span>
               </div>
             </div>
           ))
@@ -478,90 +605,78 @@ function EnhancedPostsManager({ posts, socialAccounts, onPostCreated, onPostUpda
   );
 }
 
-/* -------------------------------------------------
-   ACCOUNTS MANAGER – PENDING VERIFICATION
-   ------------------------------------------------- */
-function AccountsManager({ accounts }) {
-  const allAccounts = [
-    { id: 'fb1', platform: 'Facebook', name: 'Facebook Page 1', type: 'page' },
-    { id: 'fb2', platform: 'Facebook', name: 'Facebook Page 2', type: 'page' },
-    { id: 'fb3', platform: 'Facebook', name: 'Facebook Page 3', type: 'page' },
-    { id: 'ig1', platform: 'Instagram', name: 'Instagram Business 1', type: 'business' },
-    { id: 'ig2', platform: 'Instagram', name: 'Instagram Business 2', type: 'business' },
-    { id: 'ig3', platform: 'Instagram', name: 'Instagram Business 3', type: 'business' },
-    { id: 'wa1', platform: 'WhatsApp', name: 'WhatsApp Business', type: 'business' },
-    { id: 'tt1', platform: 'TikTok', name: 'TikTok Account', type: 'business' },
-  ];
-
-  const connected = accounts.map(a => a.id);
-  const isPending = !connected.length;
-
+/* ------------------------------------------------------------------ */
+/*  ACCOUNTS MANAGER – PENDING                                        */
+/* ------------------------------------------------------------------ */
+function AccountsManager() {
   return (
-    <div className="accounts-manager-pro">
+    <div className="accounts-manager">
       <h2>Connected Accounts</h2>
-      {isPending ? (
-        <div className="pending-verification">
-          <div className="pending-icon">Lock</div>
-          <h3>Waiting for Meta Business Verification</h3>
-          <p>Your app is under review. Once approved, your accounts will be connected automatically.</p>
-        </div>
-      ) : (
-        <div className="account-grid">
-          {allAccounts.map(acc => (
-            <div key={acc.id} className={`account-card ${connected.includes(acc.id) ? 'connected' : 'pending'}`}>
-              <div className="platform-icon">{acc.platform}</div>
-              <strong>{acc.name}</strong>
-              <span className="account-type">{acc.type}</span>
-              <span className="status-badge">
-                {connected.includes(acc.id) ? 'Connected' : 'Pending Integration'}
-              </span>
-            </div>
-          ))}
-        </div>
-      )}
+      <div className="pending-verification">
+        <div className="pending-icon">Lock</div>
+        <h3>Meta Business Verification Required</h3>
+        <p>Your app is under review. Accounts will appear here after approval.</p>
+      </div>
     </div>
   );
 }
 
-/* -------------------------------------------------
-   CONVERSATIONS MANAGER – PROFESSIONAL CHAT UI
-   ------------------------------------------------- */
-function ConversationsManager({ conversations }) {
+/* ------------------------------------------------------------------ */
+/*  CONVERSATIONS MANAGER – EMPTY                                     */
+/* ------------------------------------------------------------------ */
+function ConversationsManager() {
   return (
-    <div className="conversations-manager-pro">
+    <div className="conversations-manager">
       <div className="conversations-header">
         <h2>Messages</h2>
-        <button className="new-chat-btn">+ New Message</button>
       </div>
-
-      {conversations.length === 0 ? (
-        <div className="empty-chat">
-          <div className="empty-icon">Message</div>
-          <p>No conversations yet</p>
-          <small>Customer messages will appear here once connected</small>
-        </div>
-      ) : (
-        <div className="chat-list">
-          {conversations.map(conv => (
-            <div key={conv.id} className="chat-item">
-              <div className="chat-avatar">User</div>
-              <div className="chat-info">
-                <strong>User {conv.userId}</strong>
-                <p>{conv.messages[conv.messages.length - 1]?.text?.slice(0, 60)}...</p>
-                <span className="chat-time">{new Date(conv.updatedAt).toLocaleString()}</span>
-              </div>
-              <div className="chat-platform">{conv.platform}</div>
-            </div>
-          ))}
-        </div>
-      )}
+      <div className="empty-chat">
+        <div className="empty-icon">MessageCircle</div>
+        <p>No conversations yet. Connect accounts to start chatting.</p>
+      </div>
     </div>
   );
 }
 
-/* -------------------------------------------------
-   CALENDAR VIEW (from previous pro version)
-   ------------------------------------------------- */
-// ... (copy CalendarView from previous response)
+/* ------------------------------------------------------------------ */
+/*  CALENDAR VIEW – SIMPLE GRID                                       */
+/* ------------------------------------------------------------------ */
+function CalendarView({ posts }: { posts: any[] }) {
+  const today = new Date();
+  const month = today.getMonth();
+  const year = today.getFullYear();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const firstDay = new Date(year, month, 1).getDay();
+
+  return (
+    <div className="calendar-view">
+      <div className="calendar-header">
+        <h2>{today.toLocaleString('default', { month: 'long', year: 'numeric' })}</h2>
+      </div>
+      <div className="calendar-grid-header">
+        {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(d => (
+          <div key={d} className="day-header">
+            {d}
+          </div>
+        ))}
+      </div>
+      <div className="calendar-grid">
+        {Array.from({ length: firstDay }, (_, i) => (
+          <div key={`empty-${i}`} className="calendar-day empty" />
+        ))}
+        {Array.from({ length: daysInMonth }, (_, i) => {
+          const day = i + 1;
+          const hasPosts = posts.some(p => new Date(p.scheduledFor).getDate() === day);
+          return (
+            <div key={day} className={`calendar-day ${hasPosts ? 'has-posts' : ''}`}>
+              <span className="day-number">{day}</span>
+              {hasPosts && <div className="post-indicator">{posts.filter(p => new Date(p.scheduledFor).getDate() === day).length}</div>}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
 
 export default App;
