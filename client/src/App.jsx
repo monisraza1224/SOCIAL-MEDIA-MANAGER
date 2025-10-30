@@ -60,7 +60,7 @@ function App() {
 
   return (
     <div className="app">
-      <Header user={user} onLogout={handleLogout} />
+      <Header user={user} onLogout456={handleLogout} />
       <Navigation activeTab={activeTab} setActiveTab={setActiveTab} />
       <main className="main-content">
         {activeTab === 'dashboard' && (
@@ -76,19 +76,10 @@ function App() {
             posts={posts}
             socialAccounts={socialAccounts}
             onPostCreated={fetchUserData}
-            onPostUpdated={fetchUserData}
-            onPostDeleted={fetchUserData}
           />
         )}
-        {activeTab === 'accounts' && (
-          <AccountsManager accounts={socialAccounts} onAccountsUpdate={fetchUserData} />
-        )}
-        {activeTab === 'conversations' && (
-          <ConversationsManager
-            conversations={conversations}
-            onConversationsUpdate={fetchUserData}
-          />
-        )}
+        {activeTab === 'accounts' && <AccountsManager accounts={socialAccounts} />}
+        {activeTab === 'conversations' && <ConversationsManager conversations={conversations} />}
       </main>
     </div>
   );
@@ -111,20 +102,8 @@ function LoginPage({ onLogin }) {
       <div className="login-container">
         <h1>Social Media Manager</h1>
         <form onSubmit={handleSubmit} className="login-form">
-          <input
-            type="email"
-            placeholder="Email"
-            value={email}
-            onChange={e => setEmail(e.target.value)}
-            required
-          />
-          <input
-            type="password"
-            placeholder="Password"
-            value={password}
-            onChange={e => setPassword(e.target.value)}
-            required
-          />
+          <input type="email" placeholder="Email" value={email} onChange={e => setEmail(e.target.value)} required />
+          <input type="password" placeholder="Password" value={password} onChange={e => setPassword(e.target.value)} required />
           <button type="submit">Login</button>
         </form>
         <p className="demo-credentials">Demo: admin@test.com / password123</p>
@@ -136,16 +115,14 @@ function LoginPage({ onLogin }) {
 /* ------------------------------------------------------------------ */
 /*  HEADER                                                            */
 /* ------------------------------------------------------------------ */
-function Header({ user, onLogout }) {
+function Header({ user, onLogout456 }) {
   return (
     <header className="header">
       <div className="header-content">
         <h1>Social Media Manager</h1>
         <div className="user-info">
           <span>Welcome, {user.username}</span>
-          <button onClick={onLogout} className="logout-btn">
-            Logout
-          </button>
+          <button onClick={onLogout456} className="logout-btn">Logout</button>
         </div>
       </div>
     </header>
@@ -153,15 +130,15 @@ function Header({ user, onLogout }) {
 }
 
 /* ------------------------------------------------------------------ */
-/*  NAVIGATION – CLEAN, ONE ICON PER TAB                              */
+/*  NAVIGATION – ONE ICON PER TAB                                     */
 /* ------------------------------------------------------------------ */
 function Navigation({ activeTab, setActiveTab }) {
   const tabs = [
-    { id: 'dashboard',   label: 'Dashboard',   icon: 'Bar Chart' },
+    { id: 'dashboard',   label: 'Dashboard',   icon: 'Dashboard' },
     { id: 'calendar',    label: 'Calendar',    icon: 'Calendar' },
-    { id: 'posts',       label: 'Posts',       icon: 'File Text' },
-    { id: 'accounts',    label: 'Accounts',    icon: 'Users' },
-    { id: 'conversations', label: 'Messages', icon: 'Message Circle' },
+    { id: 'posts',       label: 'Posts',       icon: 'Posts' },
+    { id: 'accounts',    label: 'Accounts',    icon: 'Accounts' },
+    { id: 'conversations', label: 'Messages', icon: 'Messages' },
   ];
 
   return (
@@ -181,14 +158,11 @@ function Navigation({ activeTab, setActiveTab }) {
 }
 
 /* ------------------------------------------------------------------ */
-/*  PROFESSIONAL DASHBOARD – CLEAN & PROFESSIONAL                     */
+/*  PROFESSIONAL DASHBOARD – MATCHES YOUR SCREENSHOT                  */
 /* ------------------------------------------------------------------ */
-function ProfessionalDashboard({ posts, socialAccounts, conversations }) {
+function ProfessionalDashboard({ posts, conversations }) {
   const scheduled = posts.filter(p => p.status === 'scheduled').length;
   const published = posts.filter(p => p.status === 'published').length;
-  const activeAccounts = new Set(
-    posts.flatMap(p => p.selectedAccounts?.map(a => a.id) || [])
-  ).size;
 
   return (
     <section className="professional-dashboard">
@@ -198,62 +172,42 @@ function ProfessionalDashboard({ posts, socialAccounts, conversations }) {
       </div>
 
       <div className="stats-grid-pro">
-        <StatCardPro
-          icon="Bar Chart"
-          label="Total Posts"
-          value={posts.length}
-          trend="+12%"
-          type="primary"
-        />
-        <StatCardPro
-          icon="Clock"
-          label="Scheduled"
-          value={scheduled}
-          trend="+5%"
-          type="warning"
-        />
-        <StatCardPro
-          icon="Check Circle"
-          label="Published"
-          value={published}
-          trend="+18%"
-          type="success"
-        />
-        <StatCardPro
-          icon="Users"
-          label="Active Accounts"
-          value={activeAccounts}
-          trend="+3"
-          type="info"
-        />
+        <StatCardPro label="Total Posts" value={posts.length} trend="+12%" trendText="this month" type="primary" />
+        <StatCardPro label="Scheduled" value={scheduled} trendText="Ready to publish" type="warning" />
+        <StatCardPro label="Published" value={published} trendText="Live across platforms" type="success" />
+        <StatCardPro label="Active Accounts" value={0} trendText="7 total available" type="info" />
+      </div>
+
+      <div className="engagement-metrics">
+        <h3>Engagement Metrics</h3>
+        <div className="metrics-grid">
+          <MetricCard value="12.5K" label="Total Reach" trend="+8%" />
+          <MetricCard value="4.2%" label="Engagement Rate" trend="+2%" />
+          <MetricCard value="234" label="New Followers" trend="+15%" />
+          <MetricCard value="8.7K" label="Total Likes" trend="+12%" />
+        </div>
       </div>
 
       <div className="dashboard-content-pro">
         <div className="content-column">
           <div className="content-card">
             <div className="card-header">
-              <h3>Recent Posts</h3>
-              <span className="badge success">Live</span>
+              <h3>Recent Scheduled Posts</h3>
+              <span className="badge">{scheduled}</span>
             </div>
             <div className="card-content">
-              {posts.length === 0 ? (
+              {scheduled === 0 ? (
                 <div className="empty-state">
-                  <div className="empty-icon">File Text</div>
-                  <p>No posts yet</p>
+                  <p>No scheduled posts yet</p>
+                  <small>Create your first post to see it here</small>
                 </div>
               ) : (
-                posts.slice(0, 3).map(p => (
+                posts.filter(p => p.status === 'scheduled').slice(0, 3).map(p => (
                   <div key={p.id} className="post-item-pro">
-                    <div className="post-preview">
-                      <div className="post-avatar published">Check Circle</div>
-                      <div className="post-details">
-                        <strong>{p.title}</strong>
-                        <div className="post-time">
-                          {new Date(p.scheduledFor).toLocaleString()}
-                        </div>
-                      </div>
+                    <div className="post-details">
+                      <strong>{p.title}</strong>
+                      <div className="post-time">{new Date(p.scheduledFor).toLocaleString()}</div>
                     </div>
-                    <span className="post-status-badge success">Published</span>
                   </div>
                 ))
               )}
@@ -264,25 +218,45 @@ function ProfessionalDashboard({ posts, socialAccounts, conversations }) {
         <div className="content-column">
           <div className="content-card">
             <div className="card-header">
+              <h3>Recently Published</h3>
+              <span className="badge success">{published}</span>
+            </div>
+            <div className="card-content">
+              {published === 0 ? (
+                <div className="empty-state">
+                  <p>No posts published yet</p>
+                  <small>Published posts will appear here</small>
+                </div>
+              ) : (
+                posts.filter(p => p.status === 'published').slice(0, 3).map(p => (
+                  <div key={p.id} className="post-item-pro published">
+                    <div className="post-details">
+                      <strong>{p.title}</strong>
+                      <div className="post-time">Published {new Date(p.scheduledFor).toLocaleDateString()}</div>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+
+          <div className="content-card">
+            <div className="card-header">
               <h3>Recent Conversations</h3>
-              <span className="badge info">Active</span>
+              <span className="badge info">{conversations.length}</span>
             </div>
             <div className="card-content">
               {conversations.length === 0 ? (
                 <div className="empty-state">
-                  <div className="empty-icon">Message Circle</div>
-                  <p>No messages</p>
+                  <p>No conversations yet</p>
+                  <small>Customer messages will appear here</small>
                 </div>
               ) : (
                 conversations.slice(0, 3).map(c => (
                   <div key={c.id} className="conversation-item-pro">
-                    <div className="conversation-avatar">User</div>
                     <div className="conversation-details">
                       <strong>{c.from}</strong>
                       <p>{c.lastMessage}</p>
-                    </div>
-                    <div className="conversation-time">
-                      {new Date(c.timestamp).toLocaleDateString()}
                     </div>
                   </div>
                 ))
@@ -296,40 +270,59 @@ function ProfessionalDashboard({ posts, socialAccounts, conversations }) {
 }
 
 /* ------------------------------------------------------------------ */
-/*  STAT CARD PRO – PROFESSIONAL ICONS ONLY                           */
+/*  STAT CARD PRO – NO EMOJIS                                          */
 /* ------------------------------------------------------------------ */
-function StatCardPro({ icon, label, value, trend, type }) {
+function StatCardPro({ label, value, trend, trendText, type }) {
   return (
     <div className={`stat-card-pro ${type}`}>
-      <div className="stat-icon">{icon}</div>
       <div className="stat-content">
         <h3>{label}</h3>
         <div className="stat-number">{value}</div>
-        {trend && <div className="stat-trend">{trend}</div>}
+        {trend && <div className="stat-trend">{trend} {trendText}</div>}
+        {trendText && !trend && <div className="stat-trend">{trendText}</div>}
       </div>
     </div>
   );
 }
 
 /* ------------------------------------------------------------------ */
-/*  ENHANCED POSTS MANAGER – FULLY FUNCTIONAL                         */
+/*  METRIC CARD – FOR ENGAGEMENT SECTION                              */
 /* ------------------------------------------------------------------ */
-function EnhancedPostsManager({ posts, socialAccounts, onPostCreated }) {
+function MetricCard({ value, label, trend }) {
+  return (
+    <div className="metric-card">
+      <div className="metric-value">{value}</div>
+      <div className="metric-label">{label}</div>
+      {trend && <div className="metric-trend">{trend}</div>}
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/*  ENHANCED POSTS MANAGER – EXACTLY LIKE YOUR SCREENSHOT             */
+/* ------------------------------------------------------------------ */
+function EnhancedPostsManager({ posts, onPostCreated }) {
   const [showModal, setShowModal] = useState(false);
   const [form, setForm] = useState({
     title: '',
     content: '',
     mediaType: 'text',
     mediaFiles: [],
+    hashtags: '',
+    cta: '',
     scheduledFor: '',
     selectedAccounts: [],
   });
 
-  const accounts = [
-    { id: 'fb1', platform: 'Facebook', name: 'Page 1' },
-    { id: 'ig1', platform: 'Instagram', name: 'Business 1' },
-    { id: 'wa1', platform: 'WhatsApp', name: 'Business' },
-    { id: 'tt1', platform: 'TikTok', name: 'Account' },
+  const availableAccounts = [
+    { id: 'fb1', platform: 'Facebook', name: 'Facebook Page 1', type: 'page' },
+    { id: 'fb2', platform: 'Facebook', name: 'Facebook Page 2', type: 'page' },
+    { id: 'fb3', platform: 'Facebook', name: 'Facebook Page 3', type: 'page' },
+    { id: 'ig1', platform: 'Instagram', name: 'Instagram Business 1', type: 'business' },
+    { id: 'ig2', platform: 'Instagram', name: 'Instagram Business 2', type: 'business' },
+    { id: 'ig3', platform: 'Instagram', name: 'Instagram Business 3', type: 'business' },
+    { id: 'wa1', platform: 'WhatsApp', name: 'WhatsApp Business', type: 'business' },
+    { id: 'tt1', platform: 'TikTok', name: 'TikTok Account', type: 'business' },
   ];
 
   const handleFileDrop = (e) => {
@@ -344,6 +337,8 @@ function EnhancedPostsManager({ posts, socialAccounts, onPostCreated }) {
     formData.append('title', form.title);
     formData.append('content', form.content);
     formData.append('mediaType', form.mediaType);
+    formData.append('hashtags', form.hashtags);
+    formData.append('cta', form.cta);
     formData.append('scheduledFor', new Date(form.scheduledFor).toISOString());
     form.selectedAccounts.forEach(id => formData.append('accountIds', id));
     form.mediaFiles.forEach(file => formData.append('media', file));
@@ -354,12 +349,7 @@ function EnhancedPostsManager({ posts, socialAccounts, onPostCreated }) {
       });
       setShowModal(false);
       setForm({
-        title: '',
-        content: '',
-        mediaType: 'text',
-        mediaFiles: [],
-        scheduledFor: '',
-        selectedAccounts: [],
+        title: '', content: '', mediaType: 'text', mediaFiles: [], hashtags: '', cta: '', scheduledFor: '', selectedAccounts: [],
       });
       onPostCreated();
     } catch (err) {
@@ -367,44 +357,64 @@ function EnhancedPostsManager({ posts, socialAccounts, onPostCreated }) {
     }
   };
 
+  const toggleAccount = (acc) => {
+    setForm(f => ({
+      ...f,
+      selectedAccounts: f.selectedAccounts.includes(acc.id)
+        ? f.selectedAccounts.filter(id => id !== acc.id)
+        : [...f.selectedAccounts, acc.id],
+    }));
+  };
+
   return (
     <div className="posts-manager">
       <div className="posts-header">
         <div className="header-content">
-          <h2>Posts Manager</h2>
-          <p>Schedule and publish across all platforms</p>
+          <h2>Posts Management</h2>
+          <p>Create and schedule posts across all your social media accounts</p>
         </div>
         <button className="create-post-btn primary" onClick={() => setShowModal(true)}>
-          Create Post
+          + Create New Post
         </button>
       </div>
 
       {showModal && (
         <div className="create-post-modal">
-          <div className="modal-content">
+          <div className="modal-content large">
             <div className="modal-header">
               <h3>Create New Post</h3>
               <button className="close-btn" onClick={() => setShowModal(false)}>×</button>
             </div>
             <form onSubmit={handleSubmit} className="post-form">
               <div className="form-group">
-                <label>Title</label>
-                <input value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} required />
+                <label>Post Title *</label>
+                <input value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} placeholder="Enter a compelling post title..." required />
               </div>
+
               <div className="form-group">
-                <label>Content</label>
-                <textarea rows={4} value={form.content} onChange={e => setForm({ ...form, content: e.target.value })} required />
-                <div className="character-count">{form.content.length}/280</div>
+                <label>Content/Caption *</label>
+                <textarea rows={4} value={form.content} onChange={e => setForm({ ...form, content: e.target.value })} placeholder="Write your post content here... Pro tip: Keep it engaging and include a call-to-action!" required />
+                <div className="character-count">{form.content.length}/2200 characters</div>
               </div>
+
               <div className="form-group">
-                <label>Post Type</label>
+                <label>Post Type *</label>
                 <div className="post-type-grid">
-                  {['text', 'image', 'video', 'carousel', 'reel'].map(type => (
-                    <label key={type} className="post-type-option">
-                      <input type="radio" name="mediaType" value={type} checked={form.mediaType === type} onChange={e => setForm({ ...form, mediaType: e.target.value })} />
+                  {[
+                    { type: 'text', label: 'Text Post', desc: 'Text only, no media' },
+                    { type: 'image', label: 'Image Post', desc: 'Single image' },
+                    { type: 'video', label: 'Video Post', desc: 'Single video' },
+                    { type: 'carousel', label: 'Carousel Post', desc: 'Multiple images' },
+                    { type: 'reel', label: 'Reel/Short', desc: 'Short video content' },
+                  ].map(item => (
+                    <label key={item.type} className="post-type-option">
+                      <input type="radio" name="mediaType" value={item.type} checked={form.mediaType === item.type} onChange={e => setForm({ ...form, mediaType: e.target.value })} />
                       <div className="post-type-info">
-                        <span className="post-type-icon">{type === 'text' ? 'Text' : type === 'image' ? 'Image' : type === 'video' ? 'Video' : type === 'carousel' ? 'Carousel' : 'Reel'}</span>
-                        <div><strong>{type.charAt(0).toUpperCase() + type.slice(1)}</strong></div>
+                        <div className="post-type-icon">{item.type === 'text' ? 'Text' : item.type === 'image' ? 'Image' : item.type === 'video' ? 'Video' : item.type === 'carousel' ? 'Carousel' : 'Reel'}</div>
+                        <div>
+                          <strong>{item.label}</strong>
+                          <span>{item.desc}</span>
+                        </div>
                       </div>
                     </label>
                   ))}
@@ -413,26 +423,27 @@ function EnhancedPostsManager({ posts, socialAccounts, onPostCreated }) {
 
               {form.mediaType !== 'text' && (
                 <div className="form-group">
-                  <label>Upload Media</label>
+                  <label>Upload Media *</label>
                   <div className="file-upload-zone" onDrop={handleFileDrop} onDragOver={e => e.preventDefault()}>
                     <div className="upload-content">
                       <div className="upload-icon">Upload</div>
-                      <h4>Drop files here</h4>
-                      <p>or click to browse</p>
+                      <h4>Drop your files here</h4>
+                      <p>or</p>
                       <label className="file-input-label">
-                        Choose Files
-                        <input type="file" multiple hidden onChange={e => {
-                          if (e.target.files) setForm(f => ({ ...f, mediaFiles: [...f.mediaFiles, ...Array.from(e.target.files)] }));
-                        }} />
+                        Browse Files
+                        <input type="file" multiple hidden onChange={e => e.target.files && setForm(f => ({ ...f, mediaFiles: [...f.mediaFiles, ...Array.from(e.target.files)] }))} />
                       </label>
+                      <small>
+                        {form.mediaType === 'video' || form.mediaType === 'reel' ? 'Supports MP4, MOV, AVI (Max 100MB)' : 'Supports JPG, PNG, GIF (Max 20MB each)'}
+                      </small>
                     </div>
                   </div>
                   {form.mediaFiles.length > 0 && (
                     <div className="uploaded-files">
                       {form.mediaFiles.map((file, i) => (
                         <div key={i} className="uploaded-file-item">
-                          <div className="file-preview"><span>{file.name}</span></div>
-                          <button type="button" className="remove-file-btn" onClick={() => setForm(f => ({ ...f, mediaFiles: f.mediaFiles.filter((_, idx) => idx !== i) }))}>×</button>
+                          <span>{file.name}</span>
+                          <button type="button" onClick={() => setForm(f => ({ ...f, mediaFiles: f.mediaFiles.filter((_, idx) => idx !== i) }))}>×</button>
                         </div>
                       ))}
                     </div>
@@ -441,58 +452,149 @@ function EnhancedPostsManager({ posts, socialAccounts, onPostCreated }) {
               )}
 
               <div className="form-group">
-                <label>Schedule Date & Time</label>
-                <input type="datetime-local" value={form.scheduledFor} onChange={e => setForm({ ...form, scheduledFor: e.target.value })} required />
+                <label>Hashtags</label>
+                <input value={form.hashtags} onChange={e => setForm({ ...form, hashtags: e.target.value })} placeholder="#social #media #marketing (comma separated)" />
+                <div className="hashtag-tips">Pro tip: Use 3-5 relevant hashtags for better reach</div>
               </div>
 
               <div className="form-group">
-                <label>Select Accounts</label>
-                {accounts.map(acc => (
-                  <label key={acc.id} className="account-checkbox">
-                    <input type="checkbox" checked={form.selectedAccounts.includes(acc.id)} onChange={() => {
-                      setForm(f => ({
-                        ...f,
-                        selectedAccounts: f.selectedAccounts.includes(acc.id)
-                          ? f.selectedAccounts.filter(id => id !== acc.id)
-                          : [...f.selectedAccounts, acc.id],
-                      }));
-                    }} />
-                    <div className="account-info">
-                      <span className="account-platform">{acc.platform}</span>
-                      <strong>{acc.name}</strong>
-                    </div>
-                  </label>
-                ))}
+                <label>Call to Action</label>
+                <input value={form.cta} onChange={e => setForm({ ...form, cta: e.target.value })} placeholder="Learn more, Shop now, Visit website, etc." />
+              </div>
+
+              <div className="form-group">
+                <label>Select Accounts to Post *</label>
+
+                {/* Facebook */}
+                <div className="platform-group">
+                  <h4 className="platform-group-title">Facebook Pages</h4>
+                  <div className="accounts-selection-grid">
+                    {availableAccounts.filter(a => a.platform === 'Facebook').map(acc => (
+                      <label key={acc.id} className="account-checkbox">
+                        <input type="checkbox" checked={form.selectedAccounts.includes(acc.id)} onChange={() => toggleAccount(acc)} />
+                        <div className="account-info">
+                          <div className="account-platform">Facebook</div>
+                          <strong>{acc.name}</strong>
+                          <span className="account-type">{acc.type}</span>
+                        </div>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Instagram */}
+                <div className="platform-group">
+                  <h4 className="platform-group-title">Instagram Accounts</h4>
+                  <div className="accounts-selection-grid">
+                    {availableAccounts.filter(a => a.platform === 'Instagram').map(acc => (
+                      <label key={acc.id} className="account-checkbox">
+                        <input type="checkbox" checked={form.selectedAccounts.includes(acc.id)} onChange={() => toggleAccount(acc)} />
+                        <div className="account-info">
+                          <div className="account-platform">Instagram</div>
+                          <strong>{acc.name}</strong>
+                          <span className="account-type">{acc.type}</span>
+                        </div>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+
+                {/* WhatsApp */}
+                <div className="platform-group">
+                  <h4 className="platform-group-title">WhatsApp</h4>
+                  <div className="accounts-selection-grid">
+                    {availableAccounts.filter(a => a.platform === 'WhatsApp').map(acc => (
+                      <label key={acc.id} className="account-checkbox">
+                        <input type="checkbox" checked={form.selectedAccounts.includes(acc.id)} onChange={() => toggleAccount(acc)} />
+                        <div className="account-info">
+                          <div className="account-platform">WhatsApp</div>
+                          <strong>{acc.name}</strong>
+                          <span className="account-type">{acc.type}</span>
+                        </div>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+
+                {/* TikTok */}
+                <div className="platform-group">
+                  <h4 className="platform-group-title">TikTok</h4>
+                  <div className="accounts-selection-grid">
+                    {availableAccounts.filter(a => a.platform === 'TikTok').map(acc => (
+                      <label key={acc.id} className="account-checkbox">
+                        <input type="checkbox" checked={form.selectedAccounts.includes(acc.id)} onChange={() => toggleAccount(acc)} />
+                        <div className="account-info">
+                          <div className="account-platform">TikTok</div>
+                          <strong>{acc.name}</strong>
+                          <span className="account-type">{acc.type}</span>
+                        </div>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+
                 {form.selectedAccounts.length > 0 && (
                   <div className="selection-summary">
-                    <strong>{form.selectedAccounts.length} account(s) selected</strong>
+                    <strong>Selected: {form.selectedAccounts.length} account(s)</strong>
                   </div>
                 )}
               </div>
 
+              <div className="form-group">
+                <label>Schedule Date & Time *</label>
+                <input type="datetime-local" value={form.scheduledFor} onChange={e => setForm({ ...form, scheduledFor: e.target.value })} required />
+                <div className="schedule-tips">Schedule in your audience's peak engagement times</div>
+              </div>
+
               <div className="form-actions">
                 <button type="button" className="cancel-btn" onClick={() => setShowModal(false)}>Cancel</button>
-                <button type="submit" className="submit-btn">Schedule Post</button>
+                <button type="submit" className="submit-btn" disabled={form.selectedAccounts.length === 0}>
+                  Schedule to {form.selectedAccounts.length} Account(s)
+                </button>
               </div>
             </form>
           </div>
         </div>
       )}
 
+      {/* Scheduled Posts */}
       <div className="posts-list">
-        {posts.length === 0 ? (
-          <div className="no-data">No posts scheduled</div>
+        <h3>Scheduled Posts ({posts.filter(p => p.status === 'scheduled').length})</h3>
+        {posts.filter(p => p.status === 'scheduled').length === 0 ? (
+          <p className="no-posts">No posts scheduled yet. Create your first post!</p>
         ) : (
-          posts.map(p => (
-            <div key={p.id} className={`post-card ${p.status}`}>
+          posts.filter(p => p.status === 'scheduled').map(p => (
+            <div key={p.id} className="post-card">
               <div className="post-header">
                 <h3>{p.title}</h3>
                 <span className={`post-type-badge ${p.mediaType}`}>{p.mediaType}</span>
               </div>
               <p>{p.content}</p>
               <div className="post-meta">
-                <span>{new Date(p.scheduledFor).toLocaleString()}</span>
-                <span className={`status ${p.status}`}>{p.status}</span>
+                <span>Scheduled: {new Date(p.scheduledFor).toLocaleString()}</span>
+                <span className="status scheduled">scheduled</span>
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+
+      {/* Published Posts */}
+      <div className="posts-list">
+        <h3>Published Posts ({posts.filter(p => p.status === 'published').length})</h3>
+        {posts.filter(p => p.status === 'published').length === 0 ? (
+          <p className="no-posts">No posts published yet.</p>
+        ) : (
+          posts.filter(p => p.status === 'published').map(p => (
+            <div key={p.id} className="post-card published">
+              <div className="post-header">
+                <h3>{p.title}</h3>
+                <span className={`post-type-badge ${p.mediaType} published`}>{p.mediaType}</span>
+              </div>
+              <p>{p.content}</p>
+              <div className="post-meta">
+                <span>Published: {new Date(p.scheduledFor).toLocaleString()}</span>
+                <span className="status published">published</span>
               </div>
             </div>
           ))
@@ -510,7 +612,6 @@ function AccountsManager() {
     <div className="accounts-manager">
       <h2>Connected Accounts</h2>
       <div className="pending-verification">
-        <div className="pending-icon">Lock</div>
         <h3>Meta Business Verification Required</h3>
         <p>Your app is under review. Accounts will appear here after approval.</p>
       </div>
@@ -528,7 +629,6 @@ function ConversationsManager() {
         <h2>Messages</h2>
       </div>
       <div className="empty-chat">
-        <div className="empty-icon">Message Circle</div>
         <p>No conversations yet. Connect accounts to start chatting.</p>
       </div>
     </div>
@@ -536,7 +636,7 @@ function ConversationsManager() {
 }
 
 /* ------------------------------------------------------------------ */
-/*  CALENDAR VIEW – PROFESSIONAL & CLEAN                              */
+/*  CALENDAR VIEW – UNCHANGED (AS REQUESTED)                          */
 /* ------------------------------------------------------------------ */
 function CalendarView({ posts }) {
   const today = new Date();
