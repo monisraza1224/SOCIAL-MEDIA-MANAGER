@@ -14,17 +14,15 @@ const { User, SocialAccount, Post, Conversation } = require('./models');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
-
-// FIXED CORS - ALLOW ALL ORIGINS FOR GLOBAL ACCESS
+// CORS configuration - ALLOW ALL ORIGINS
 app.use(cors({
-  origin: true, // Allow all origins
+  origin: true, // This allows ALL origins
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
 }));
 
-app.options('*', cors());
-app.use(express.json());
+app.options('*', cors()); // Handle preflight for all routes
 
 // File upload setup
 const uploadsDir = path.join(__dirname, 'uploads');
