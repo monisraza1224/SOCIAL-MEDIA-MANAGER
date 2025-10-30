@@ -3867,3 +3867,90 @@ body {
     grid-template-columns: 1fr;
   }
 }
+/* -------------------------------------------------
+   GLOBAL & LAYOUT
+   ------------------------------------------------- */
+.app { font-family: 'Segoe UI', sans-serif; background:#f4f6f9; min-height:100vh; }
+.header, .navigation { background:#fff; box-shadow:0 2px 8px rgba(0,0,0,.08); }
+.header-content, .navigation { display:flex; justify-content:space-between; align-items:center; padding:1rem 2rem; }
+.navigation .nav-btn { display:flex; align-items:center; gap:.5rem; padding:.75rem 1.25rem; border:none; background:none; font-weight:500; cursor:pointer; border-radius:.5rem; }
+.navigation .nav-btn.active { background:#3b82f6; color:#fff; }
+.main-content { padding:2rem; }
+
+/* -------------------------------------------------
+   DASHBOARD PRO
+   ------------------------------------------------- */
+.dashboard-pro__header { display:flex; justify-content:space-between; align-items:center; margin-bottom:2rem; }
+.dashboard-pro__title { font-size:1.75rem; font-weight:600; }
+.dashboard-pro__period span { background:#e5e7eb; padding:.35rem .75rem; border-radius:.5rem; font-size:.85rem; }
+.dashboard-pro__kpis { display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:1.5rem; margin-bottom:2.5rem; }
+.kpi-card { background:#fff; border-radius:.75rem; padding:1.25rem; box-shadow:0 2px 6px rgba(0,0,0,.06); display:flex; align-items:center; }
+.kpi-card__icon { font-size:2rem; margin-right:1rem; }
+.kpi-card__title { margin:0; font-size:.95rem; color:#555; }
+.kpi-card__value { margin:.25rem 0 0; font-size:1.75rem; font-weight:700; }
+.kpi-card__subtitle { margin:0; font-size:.8rem; color:#777; }
+.kpi-card__trend { font-size:.8rem; font-weight:600; }
+.kpi-card__trend.up { color:#10b981; }
+.kpi-card__trend.down { color:#ef4444; }
+
+.dashboard-pro__engagement, .dashboard-pro__recent { margin-bottom:2.5rem; }
+.dashboard-pro__section-title { font-size:1.35rem; margin-bottom:1rem; }
+.dashboard-pro__metrics { display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:1rem; }
+.metric-card { background:#fff; border-radius:.75rem; padding:1rem; text-align:center; box-shadow:0 2px 6px rgba(0,0,0,.06); }
+.metric-card__value { font-size:1.5rem; font-weight:700; }
+.metric-card__label { font-size:.85rem; color:#555; }
+.metric-card__change { font-size:.75rem; margin-top:.35rem; }
+.metric-card__change.positive { color:#10b981; }
+
+.dashboard-pro__recent { display:grid; grid-template-columns:1fr 1fr; gap:2rem; }
+.recent-card { background:#fff; border-radius:.75rem; box-shadow:0 2px 6px rgba(0,0,0,.06); }
+.recent-card__header { display:flex; justify-content:space-between; align-items:center; padding:1rem 1.25rem; border-bottom:1px solid #eaeaea; }
+.recent-card__title { margin:0; font-size:1.1rem; font-weight:600; }
+.recent-card__badge { background:#3b82f6; color:#fff; font-size:.75rem; padding:.2rem .5rem; border-radius:.4rem; }
+.recent-card__badge.scheduled { background:#f59e0b; }
+.recent-card__badge.published { background:#10b981; }
+.recent-card__body { padding:1rem 1.25rem; }
+.recent-card__empty { color:#777; font-style:italic; }
+.recent-card__list { list-style:none; margin:0; padding:0; }
+.recent-card__item { display:flex; align-items:center; margin-bottom:.75rem; }
+.recent-card__avatar { font-size:1.25rem; margin-right:.75rem; }
+.recent-card__info strong { display:block; font-size:.95rem; }
+.recent-card__info small { color:#777; font-size:.8rem; }
+
+/* -------------------------------------------------
+   CALENDAR PRO
+   ------------------------------------------------- */
+.calendar-pro { background:#fff; border-radius:1rem; padding:2rem; box-shadow:0 4px 12px rgba(0,0,0,.08); }
+.calendar-pro__header { text-align:center; margin-bottom:1.5rem; }
+.calendar-pro__title { font-size:1.75rem; font-weight:600; }
+.calendar-pro__nav { display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem; }
+.calendar-pro__nav button { background:#f1f5f9; border:none; padding:.5rem 1rem; border-radius:.5rem; cursor:pointer; font-weight:500; }
+.calendar-pro__grid { display:grid; grid-template-columns:repeat(7,1fr); gap:.5rem; margin-bottom:2rem; }
+.calendar-pro__weekday { text-align:center; font-weight:600; color:#4b5563; padding:.5rem 0; }
+.calendar-pro__day { aspect-ratio:1; display:flex; flex-direction:column; justify-content:center; align-items:center; border-radius:.5rem; cursor:pointer; position:relative; }
+.calendar-pro__day.empty { background:transparent; }
+.calendar-pro__day.selected { background:#3b82f6; color:#fff; }
+.calendar-pro__day.has-posts { background:#fef3c7; }
+.day-number { font-weight:600; }
+.post-count { position:absolute; top:4px; right:4px; background:#f59e0b; color:#fff; font-size:.65rem; width:1.2rem; height:1.2rem; border-radius:50%; display:flex; align-items:center; justify-content:center; }
+
+.calendar-pro__details { margin-top:1.5rem; }
+.calendar-pro__details h3 { margin-bottom:.75rem; }
+.no-posts { color:#777; font-style:italic; }
+.post-list .post-item { background:#f9fafb; padding:1rem; border-radius:.5rem; margin-bottom:.75rem; }
+.post-item .post-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:.5rem; }
+.post-item .status { background:#10b981; color:#fff; font-size:.7rem; padding:.15rem .4rem; border-radius:.3rem; }
+.platforms { margin-top:.5rem; display:flex; gap:.5rem; flex-wrap:wrap; }
+.platform-tag { background:#e5e7eb; padding:.2rem .5rem; border-radius:.3rem; font-size:.75rem; }
+
+.calendar-pro__stats { display:grid; grid-template-columns:repeat(4,1fr); gap:1rem; margin-top:2rem; }
+.stat-box { background:#f8fafc; padding:1rem; border-radius:.75rem; text-align:center; }
+.stat-value { font-size:1.5rem; font-weight:700; }
+.stat-label { font-size:.85rem; color:#555; }
+
+/* -------------------------------------------------
+   ACCOUNTS
+   ------------------------------------------------- */
+.account-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:1rem; }
+.account-card { background:#fff; padding:1rem; border-radius:.75rem; text-align:center; box-shadow:0 2px 6px rgba(0,0,0,.06); }
+.platform-icon { font-size:1.5rem; margin-bottom:.5rem; }
